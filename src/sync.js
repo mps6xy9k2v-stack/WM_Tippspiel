@@ -1,12 +1,11 @@
 'use strict';
 
-// Ergebnis-Synchronisation:
+// Ergebnis-Synchronisation für den lokalen Server:
 //   1) football-data.org (kostenloser API-Key, Live-Ergebnisse, alle 2 Minuten)
 //   2) openfootball worldcup.json (ohne Key, ca. täglich aktualisiert) als Fallback
 const { db, setSetting, getSetting } = require('./db');
-
-const FD_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
-const OF_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
+const { fetchMatches } = require('./fetch-matches');
+const { findLegacyMatch } = require('./match-merge');
 
 const upsertStmt = db.prepare(`
   INSERT INTO matches (ext_id, home_team, away_team, kickoff_utc, stage, group_name, venue, status, home_score, away_score)
@@ -24,105 +23,34 @@ const upsertStmt = db.prepare(`
   WHERE matches.manual_override = 0
 `);
 
-function mapFdStatus(status) {
-  switch (status) {
-    case 'FINISHED': return 'FINISHED';
-    case 'IN_PLAY':
-    case 'PAUSED': return 'LIVE';
-    case 'POSTPONED':
-    case 'SUSPENDED':
-    case 'CANCELLED': return 'CANCELLED';
-    default: return 'SCHEDULED'; // SCHEDULED, TIMED
-  }
-}
-
-async function syncFootballData(apiKey) {
-  const res = await fetch(FD_URL, { headers: { 'X-Auth-Token': apiKey } });
-  if (!res.ok) throw new Error(`football-data.org antwortete mit HTTP ${res.status}`);
-  const data = await res.json();
-  let count = 0;
-  for (const m of data.matches || []) {
-    if (!m.homeTeam?.name || !m.awayTeam?.name) continue; // Platzhalter (z. B. "Winner Group A") überspringen
-    upsertStmt.run(
-      `fd:${m.id}`,
-      m.homeTeam.name,
-      m.awayTeam.name,
-      m.utcDate,
-      m.stage || null,
-      m.group ? m.group.replace(/^GROUP_/, 'Gruppe ') : null,
-      m.venue || null,
-      mapFdStatus(m.status),
-      m.score?.fullTime?.home ?? null,
-      m.score?.fullTime?.away ?? null
-    );
-    count++;
-  }
-  return { source: 'football-data.org', count };
-}
-
-// openfootball: "13:00 UTC-6" / "18:00 UTC+2" -> ISO-Zeit in UTC
-function parseOfKickoff(date, time) {
-  if (!date) return null;
-  if (!time) return `${date}T12:00:00Z`;
-  const m = time.match(/^(\d{1,2}):(\d{2})(?:\s*UTC([+-]\d{1,2})(?::?(\d{2}))?)?/);
-  if (!m) return `${date}T12:00:00Z`;
-  const [, hh, mm, offH, offM] = m;
-  let offset = 'Z';
-  if (offH) {
-    const sign = offH.startsWith('-') ? '-' : '+';
-    offset = `${sign}${String(Math.abs(parseInt(offH, 10))).padStart(2, '0')}:${offM || '00'}`;
-  }
-  return new Date(`${date}T${hh.padStart(2, '0')}:${mm}:00${offset}`).toISOString();
-}
-
-function ofTeamName(team) {
-  if (!team) return null;
-  if (typeof team === 'string') return team;
-  return team.name || team.code || null;
-}
-
-function ofScore(m) {
-  if (m.score && Array.isArray(m.score.ft)) return [m.score.ft[0], m.score.ft[1]];
-  if (Number.isInteger(m.score1) && Number.isInteger(m.score2)) return [m.score1, m.score2];
-  return [null, null];
-}
-
-async function syncOpenFootball() {
-  const res = await fetch(OF_URL);
-  if (!res.ok) throw new Error(`openfootball antwortete mit HTTP ${res.status}`);
-  const data = await res.json();
-  let count = 0;
-  for (const m of data.matches || []) {
-    const home = ofTeamName(m.team1);
-    const away = ofTeamName(m.team2);
-    const kickoff = parseOfKickoff(m.date, m.time);
-    if (!home || !away || !kickoff) continue;
-    const [hs, as] = ofScore(m);
-    const extId = m.num != null
-      ? `of:${m.num}`
-      : `of:${m.date}:${home}:${away}`;
-    upsertStmt.run(
-      extId, home, away, kickoff,
-      m.round || null,
-      m.group || null,
-      m.ground || null,
-      hs !== null ? 'FINISHED' : 'SCHEDULED',
-      hs, as
-    );
-    count++;
-  }
-  return { source: 'openfootball', count };
-}
-
 async function syncOnce() {
-  const apiKey = process.env.FOOTBALL_DATA_API_KEY;
   try {
-    const result = apiKey ? await syncFootballData(apiKey) : await syncOpenFootball();
+    const { source, matches } = await fetchMatches(process.env.FOOTBALL_DATA_API_KEY);
+    // Beim Quellenwechsel vorhandene Spiele wiedererkennen statt duplizieren:
+    // die alte Zeile bekommt die neue ext_id, Tipps (über matches.id) bleiben erhalten.
+    const existing = db.prepare(
+      'SELECT id, ext_id, kickoff_utc, home_team, away_team, manual_override FROM matches WHERE ext_id IS NOT NULL'
+    ).all();
+    const knownIds = new Set(existing.map((e) => e.ext_id));
+    for (const m of matches) {
+      if (!knownIds.has(m.ext_id)) {
+        const legacy = findLegacyMatch(existing, m);
+        if (legacy) {
+          db.prepare('UPDATE matches SET ext_id = ? WHERE id = ?').run(m.ext_id, legacy.id);
+          legacy.ext_id = m.ext_id;
+          knownIds.add(m.ext_id);
+        }
+      }
+      upsertStmt.run(
+        m.ext_id, m.home_team, m.away_team, m.kickoff_utc,
+        m.stage, m.group_name, m.venue, m.status, m.home_score, m.away_score
+      );
+    }
     setSetting('last_sync', new Date().toISOString());
-    setSetting('last_sync_source', result.source);
+    setSetting('last_sync_source', source);
     setSetting('last_sync_error', '');
-    console.log(`[sync] ${result.count} Spiele von ${result.source} aktualisiert`);
-    return result;
+    console.log(`[sync] ${matches.length} Spiele von ${source} aktualisiert`);
+    return { source, count: matches.length };
   } catch (err) {
     setSetting('last_sync_error', err.message);
     console.error(`[sync] Fehler: ${err.message}`);

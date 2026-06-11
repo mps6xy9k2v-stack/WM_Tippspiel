@@ -1,0 +1,32 @@
+# Holt die aktuellen WM-Ergebnisse und schreibt sie in die Supabase-Datenbank.
+# Benötigte Repository-Secrets (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_URL               URL des Supabase-Projekts
+#   SUPABASE_SERVICE_ROLE_KEY  Service-Role-Key des Projekts
+#   FOOTBALL_DATA_API_KEY      optional – für Live-Ergebnisse von football-data.org
+name: Ergebnisse synchronisieren
+
+on:
+  schedule:
+    # Alle 15 Minuten (GitHub führt Cron-Jobs teils mit etwas Verzögerung aus)
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: sync-results
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ergebnisse nach Supabase synchronisieren
+        run: node scripts/sync-supabase.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
