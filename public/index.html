@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WM 2026 Tippspiel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>⚽ WM 2026 Tippspiel</h1>
+    <div id="user-area"></div>
+  </header>
+
+  <nav id="tabs">
+    <button class="tab active" data-tab="matches">Spiele</button>
+    <button class="tab" data-tab="leaderboard">Rangliste</button>
+    <button class="tab" data-tab="admin" id="admin-tab" hidden>Admin</button>
+  </nav>
+
+  <main>
+    <section id="auth-box" hidden>
+      <h2 id="auth-title">Anmelden</h2>
+      <form id="auth-form">
+        <input type="text" id="auth-name" placeholder="Name" autocomplete="username" required>
+        <input type="password" id="auth-password" placeholder="Passwort" autocomplete="current-password" required>
+        <button type="submit" id="auth-submit">Einloggen</button>
+      </form>
+      <p class="auth-switch">
+        <span id="auth-switch-text">Noch kein Konto?</span>
+        <a href="#" id="auth-switch-link">Registrieren</a>
+      </p>
+      <p class="error" id="auth-error"></p>
+    </section>
+
+    <section id="tab-matches">
+      <div id="sync-info" class="sync-info"></div>
+      <div id="match-filter">
+        <button class="filter active" data-filter="upcoming">Anstehend</button>
+        <button class="filter" data-filter="all">Alle</button>
+        <button class="filter" data-filter="finished">Beendet</button>
+      </div>
+      <div id="matches-list"><p class="muted">Lade Spiele…</p></div>
+    </section>
+
+    <section id="tab-leaderboard" hidden>
+      <table id="leaderboard-table">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Punkte</th><th title="Exakte Ergebnisse">🎯</th><th title="Richtige Tordifferenz">±</th><th title="Richtige Tendenz">↑</th><th>Tipps</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="muted small">🎯 exakt (4 P.) · ± Tordifferenz (3 P.) · ↑ Tendenz (2 P.) – nur beendete Spiele zählen</p>
+    </section>
+
+    <section id="tab-admin" hidden>
+      <h2>Spiele verwalten</h2>
+      <p class="muted small">Manuell gesetzte Ergebnisse werden vom Auto-Sync nicht überschrieben.</p>
+      <button id="force-sync">Jetzt synchronisieren</button>
+      <h3>Spiel manuell anlegen</h3>
+      <form id="add-match-form">
+        <input type="text" id="am-home" placeholder="Heimteam" required>
+        <input type="text" id="am-away" placeholder="Auswärtsteam" required>
+        <input type="datetime-local" id="am-kickoff" required>
+        <input type="text" id="am-group" placeholder="Gruppe (optional)">
+        <button type="submit">Anlegen</button>
+      </form>
+      <h3>Ergebnis eintragen / korrigieren</h3>
+      <div id="admin-matches"></div>
+    </section>
+  </main>
+
+  <div id="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
