@@ -24,6 +24,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
+      - name: Abhängigkeiten installieren
+        run: npm ci
       - name: Ergebnisse nach Supabase synchronisieren
         run: node scripts/sync-supabase.js
         env:
