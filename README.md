@@ -14,8 +14,11 @@ gespeichert.
   - 🎯 **4 Punkte** – exaktes Ergebnis
   - ± **3 Punkte** – richtige Tordifferenz
   - ↑ **2 Punkte** – richtige Tendenz (Sieger richtig)
+- **Turnier-Tab** – alle 12 Gruppentabellen (live berechnet) und der komplette K.-o.-Baum bis zum Finale
+- **5 Farbschemata** – jeder wählt sein eigenes Design (🎨-Knopf oben rechts): Ozean, Rasen, Sonnenuntergang, Mitternacht oder Hell
+- **Länderflaggen, Tipp-Erinnerung** („Du hast noch X Spiele ohne Tipp"), Heute/Morgen-Markierung, Medaillen in der Rangliste
 - **Admin-Bereich** – Ergebnisse manuell eintragen/korrigieren und Spiele anlegen (falls die API mal ausfällt)
-- Einfache Konten mit Name + Passwort, mobiltauglich, dunkles Design
+- Einfache Konten mit Name + Passwort, mobiltauglich
 
 Es gibt **zwei Betriebsarten** (mit getrennten Daten – eine auswählen):
 

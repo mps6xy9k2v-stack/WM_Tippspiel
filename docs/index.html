@@ -4,16 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WM 2026 Tippspiel</title>
+  <script>
+    // Theme vor dem Rendern setzen, damit nichts aufblitzt
+    document.documentElement.dataset.theme = localStorage.getItem('tippspiel-theme') || 'ozean';
+  </script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>⚽ WM 2026 Tippspiel</h1>
-    <div id="user-area"></div>
+    <div class="header-title">
+      <h1>⚽ WM 2026 Tippspiel</h1>
+      <span class="header-sub">11. Juni – 19. Juli · USA, Kanada &amp; Mexiko</span>
+    </div>
+    <div class="header-actions">
+      <button id="theme-btn" class="icon-btn" title="Farben ändern">🎨</button>
+      <div id="user-area"></div>
+    </div>
   </header>
+
+  <div id="theme-panel" hidden>
+    <div class="theme-panel-title">Farbschema wählen</div>
+    <div id="theme-list"></div>
+  </div>
 
   <nav id="tabs">
     <button class="tab active" data-tab="matches">Spiele</button>
+    <button class="tab" data-tab="turnier">Turnier</button>
     <button class="tab" data-tab="leaderboard">Rangliste</button>
     <button class="tab" data-tab="admin" id="admin-tab" hidden>Admin</button>
   </nav>
@@ -29,7 +45,7 @@
     <section id="auth-box" hidden>
       <h2 id="auth-title">Anmelden</h2>
       <form id="auth-form">
-        <input type="text" id="auth-name" placeholder="Name" autocomplete="username" required>
+        <input type="text" id="auth-name" placeholder="Name (z. B. Gabor)" autocomplete="username" required>
         <input type="password" id="auth-password" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="current-password" required>
         <button type="submit" id="auth-submit">Einloggen</button>
       </form>
@@ -42,12 +58,23 @@
 
     <section id="tab-matches">
       <div id="sync-info" class="sync-info"></div>
+      <div id="tip-reminder" class="tip-reminder" hidden></div>
       <div id="match-filter">
         <button class="filter active" data-filter="upcoming">Anstehend</button>
         <button class="filter" data-filter="all">Alle</button>
         <button class="filter" data-filter="finished">Beendet</button>
+        <button class="filter" data-filter="untipped" id="filter-untipped" hidden>Ohne Tipp</button>
       </div>
       <div id="matches-list"><p class="muted">Lade Spiele…</p></div>
+    </section>
+
+    <section id="tab-turnier" hidden>
+      <h2 class="section-title">Gruppenphase</h2>
+      <p class="muted small">Die zwei Gruppenbesten sowie die acht besten Gruppendritten erreichen die K.-o.-Runde.</p>
+      <div id="standings"></div>
+      <h2 class="section-title">K.-o.-Runde · Der Weg zum Finale</h2>
+      <p class="muted small">Zum Scrollen wischen → Platzhalter wie „2A“ stehen für noch nicht feststehende Teams.</p>
+      <div id="bracket-scroll"><div id="bracket"></div></div>
     </section>
 
     <section id="tab-leaderboard" hidden>
@@ -72,6 +99,7 @@
         <button type="submit">Anlegen</button>
       </form>
       <h3>Ergebnis eintragen / korrigieren</h3>
+      <input type="search" id="admin-search" placeholder="Team suchen…">
       <div id="admin-matches"></div>
     </section>
   </main>
