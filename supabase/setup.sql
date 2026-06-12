@@ -89,6 +89,23 @@ as $$
   select coalesce((select p.is_admin from public.profiles p where p.id = auth.uid()), false);
 $$;
 
+-- Wer hat bei einem Spiel schon getippt? Gibt bewusst NUR die Namen zurück
+-- (keine Tipp-Werte), damit vor dem Anpfiff niemand abschreiben kann.
+create or replace function public.tippers(p_match_ext_id text)
+returns table(name text)
+language sql
+security definer set search_path = public
+stable
+as $$
+  select p.name
+  from public.tips t
+  join public.profiles p on p.id = t.user_id
+  where t.match_ext_id = p_match_ext_id
+  order by p.name;
+$$;
+
+grant execute on function public.tippers(text) to anon, authenticated;
+
 -- Profile: Namen sind für alle sichtbar (Rangliste), jeder legt nur sein eigenes an
 drop policy if exists profiles_select on public.profiles;
 create policy profiles_select on public.profiles

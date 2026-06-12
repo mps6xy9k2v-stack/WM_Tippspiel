@@ -48,14 +48,24 @@ const TEAM_ISO = {
   'Venezuela': 'VE', 'Wales': '_wal',
 };
 
+// Flaggen als Bilder statt Emojis – sehen auf allen Geräten gleich aus
 function flagFor(team) {
   const iso = TEAM_ISO[team];
   if (!iso) return '';
-  if (iso === '_eng') return '🏴󠁧󠁢󠁥󠁮󠁧󠁿';
-  if (iso === '_sco') return '🏴󠁧󠁢󠁳󠁣󠁴󠁿';
-  if (iso === '_wal') return '🏴󠁧󠁢󠁷󠁬󠁳󠁿';
-  return [...iso].map((c) => String.fromCodePoint(127397 + c.charCodeAt(0))).join('');
+  const code = iso === '_eng' ? 'gb-eng' : iso === '_sco' ? 'gb-sct' : iso === '_wal' ? 'gb-wls' : iso.toLowerCase();
+  return `<img class="flag-img" src="https://flagcdn.com/h24/${code}.png" srcset="https://flagcdn.com/h48/${code}.png 2x" alt="" loading="lazy" onerror="this.remove()">`;
 }
+
+// Eigene SVG-Icons statt Emojis
+const ICONS = {
+  star: '<svg viewBox="0 0 24 24"><path d="M12 3.2l2.7 5.4 6 .9-4.3 4.2 1 6-5.4-2.9-5.4 2.9 1-6L3.3 9.5l6-.9z" fill="currentColor"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24"><path d="M4.5 19.5l.9-3.6L16.6 4.7a2 2 0 012.8 0l-.1-.1a2 2 0 010 2.8L8.1 18.6l-3.6.9z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14.8 6.5l2.7 2.7" stroke="currentColor" stroke-width="1.7"/></svg>',
+  check: '<svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5L19.5 6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24"><path d="M8 3.5h8V9a4 4 0 01-8 0V3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 5.2H5a3 3 0 003.2 3M16 5.2h3A3 3 0 0115.8 8.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 13v2.5M9.5 19.5h5M10.3 15.5h3.4l.8 4h-5z" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linejoin="round"/></svg>',
+  chevron: '<svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+};
+
+const icon = (name, cls = 'icon') => `<span class="${cls}">${ICONS[name]}</span>`;
 
 // Platzhalter aus dem Spielplan wie "2A", "1E", "3A/B/C/D/F" oder "W73" (Sieger Spiel 73)
 const isPlaceholder = (team) => /^[123][A-L]($|\/)/.test(team) || team.includes('/') ||
@@ -65,8 +75,8 @@ function teamHtml(team, isHome) {
   const flag = flagFor(team);
   const tbd = isPlaceholder(team) ? ' tbd' : '';
   const inner = isHome
-    ? `${esc(team)} ${flag ? `<span class="flag">${flag}</span>` : ''}`
-    : `${flag ? `<span class="flag">${flag}</span> ` : ''}${esc(team)}`;
+    ? `${esc(team)} ${flag}`
+    : `${flag} ${esc(team)}`;
   return `<div class="team ${isHome ? 'home' : 'away'}${tbd}">${inner}</div>`;
 }
 
@@ -222,7 +232,7 @@ function renderUserArea(myStats) {
   const el = $('#user-area');
   if (state.user) {
     const stats = myStats && myStats.tipped > 0
-      ? `<span class="my-stats">⭐ ${myStats.points} P. · Platz ${myStats.rank}</span>` : '';
+      ? `<span class="my-stats">${icon('star', 'icon star-icon')} ${myStats.points} P. · Platz ${myStats.rank}</span>` : '';
     el.innerHTML = `${stats}<span class="name">${esc(state.user.name)}</span>
       <button class="secondary" id="logout-btn">Abmelden</button>`;
     $('#logout-btn').onclick = async () => {
@@ -355,7 +365,7 @@ function renderTipReminder() {
   const open = state.user ? untippedUpcoming().length : 0;
   $('#filter-untipped').hidden = !state.user;
   if (!open) { el.hidden = true; return; }
-  el.innerHTML = `✏️ Du hast noch <strong>${open}</strong> anstehende ${open === 1 ? 'Spiel' : 'Spiele'} ohne Tipp – <a id="show-untipped">jetzt tippen</a>`;
+  el.innerHTML = `${icon('pencil')} Du hast noch <strong>${open}</strong> anstehende ${open === 1 ? 'Spiel' : 'Spiele'} ohne Tipp – <a id="show-untipped">jetzt tippen</a>`;
   el.hidden = false;
   $('#show-untipped').onclick = () => {
     state.filter = 'untipped';
@@ -369,7 +379,7 @@ function renderMatches() {
   const matches = filterMatches();
   if (!matches.length) {
     list.innerHTML = state.filter === 'untipped'
-      ? '<p class="muted">🎉 Alles getippt – du bist auf dem Laufenden!</p>'
+      ? `<p class="muted">${icon('check', 'icon ok-icon')} Alles getippt – du bist auf dem Laufenden!</p>`
       : '<p class="muted">Keine Spiele gefunden. Die GitHub Action "Ergebnisse synchronisieren" einmal manuell starten?</p>';
     return;
   }
@@ -400,13 +410,51 @@ function renderMatches() {
             ? 'Das Spiel hat schon begonnen – Tipp gesperrt'
             : error.message);
         }
-        toast('Tipp gespeichert ✔');
+        toast('Tipp gespeichert');
         loadMatches();
       } catch (err) {
         toast(err.message, true);
       }
     };
   });
+
+  // Antippen eines anstehenden Spiels: zeigt, wer schon getippt hat
+  list.querySelectorAll('.match-card.clickable').forEach((card) => {
+    card.onclick = (e) => {
+      if (e.target.closest('form, input, button, select, a')) return;
+      toggleTippers(card);
+    };
+  });
+}
+
+const tippersCache = new Map();
+
+async function toggleTippers(card) {
+  const box = card.querySelector('.tippers');
+  const toggle = card.querySelector('.tippers-toggle');
+  if (!box) return;
+  if (!box.hidden) {
+    box.hidden = true;
+    toggle?.classList.remove('open');
+    return;
+  }
+  box.hidden = false;
+  toggle?.classList.add('open');
+  const extId = card.dataset.match;
+  if (!tippersCache.has(extId)) {
+    box.innerHTML = '<span class="muted small">Lade…</span>';
+    const { data, error } = await sb.rpc('tippers', { p_match_ext_id: extId });
+    tippersCache.set(extId, error ? null : (data || []).map((r) => r.name));
+  }
+  const names = tippersCache.get(extId);
+  if (names === null) {
+    box.innerHTML = '<span class="muted small">Die Tipps werden ab Anpfiff sichtbar.</span>';
+  } else if (!names.length) {
+    box.innerHTML = '<span class="muted small">Noch hat niemand getippt.</span>';
+  } else {
+    box.innerHTML = `<span class="muted small">Schon getippt (Tipps ab Anpfiff sichtbar):</span><br>` +
+      names.map((n) => `<span class="tipper-chip">${esc(n)}</span>`).join('');
+  }
 }
 
 function renderMatchCard(m) {
@@ -423,7 +471,8 @@ function renderMatchCard(m) {
   const meta = [displayGroup(m.group_name), displayStage(m.stage), m.venue].filter(Boolean).join(' · ');
 
   let tipSection = '';
-  if (!m.started && m.status === 'SCHEDULED') {
+  const upcoming = !m.started && m.status === 'SCHEDULED';
+  if (upcoming) {
     if (state.user) {
       const h = m.my_tip ? m.my_tip.home : '';
       const a = m.my_tip ? m.my_tip.away : '';
@@ -434,11 +483,15 @@ function renderMatchCard(m) {
           <span>:</span>
           <input class="tip-away" type="number" min="0" max="99" value="${a}" required>
           <button type="submit">${m.my_tip ? 'Ändern' : 'Tippen'}</button>
-          ${m.my_tip ? '<span class="my-tip-saved">✔</span>' : ''}
+          ${m.my_tip ? `<span class="my-tip-saved">${icon('check')}</span>` : ''}
         </form>`;
     } else {
       tipSection = `<div class="tip-row muted small">Zum Tippen bitte anmelden</div>`;
     }
+    // Antippen zeigt, WER schon getippt hat (Tipps selbst erst ab Anpfiff)
+    tipSection += `
+      <div class="tippers-toggle">Wer hat schon getippt? ${icon('chevron', 'icon chev')}</div>
+      <div class="tippers" hidden></div>`;
   } else if (m.all_tips && m.all_tips.length) {
     const rows = m.all_tips
       .slice()
@@ -454,7 +507,7 @@ function renderMatchCard(m) {
   }
 
   return `
-    <div class="match-card ${m.status === 'LIVE' ? 'is-live' : ''}">
+    <div class="match-card ${m.status === 'LIVE' ? 'is-live' : ''} ${upcoming ? 'clickable' : ''}" data-match="${esc(m.ext_id)}">
       <div class="match-top"><span>${esc(meta)}</span>${statusBadge}</div>
       <div class="match-row">
         ${teamHtml(m.home_team, true)}
@@ -561,7 +614,7 @@ function renderBracket() {
   const third = byStage.get('P3') || [];
   const finalCol = (finals.length || third.length) ? `
     <div class="bracket-col final-col">
-      <h3>🏆 ${STAGE_NAMES.F}</h3>
+      <h3>${icon('trophy')} ${STAGE_NAMES.F}</h3>
       ${finals.map((m) => matchCard(m, 'final-match')).join('')}
       ${third.length ? `<div class="bracket-p3-label">${STAGE_NAMES.P3}</div>${third.map((m) => matchCard(m)).join('')}` : ''}
     </div>` : '';
@@ -608,14 +661,12 @@ async function computeLeaderboard() {
   return sorted;
 }
 
-const MEDALS = ['🥇', '🥈', '🥉'];
-
 async function loadLeaderboard() {
   const leaderboard = await computeLeaderboard();
   const tbody = $('#leaderboard-table tbody');
   tbody.innerHTML = leaderboard.map((u, i) => `
     <tr class="${state.user && u.id === state.user.id ? 'me' : ''}">
-      <td>${u.points > 0 && MEDALS[i] ? MEDALS[i] : u.rank}</td>
+      <td>${u.points > 0 && i < 3 ? `<span class="medal medal-${i + 1}">${u.rank}</span>` : u.rank}</td>
       <td>${esc(u.name)}</td>
       <td>${u.points}</td>
       <td>${u.exact}</td>
@@ -660,7 +711,7 @@ function renderAdminMatches() {
           manual_override: true,
         }).eq('ext_id', form.dataset.match);
         if (error) throw new Error(error.message);
-        toast('Gespeichert ✔');
+        toast('Gespeichert');
         loadMatches();
       } catch (err) {
         toast(err.message, true);
@@ -683,7 +734,7 @@ function setupAdmin() {
         manual_override: true,
       });
       if (error) throw new Error(error.message);
-      toast('Spiel angelegt ✔');
+      toast('Spiel angelegt');
       e.target.reset();
       await loadMatches();
       renderAdminMatches();
