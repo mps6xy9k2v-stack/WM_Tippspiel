@@ -36,12 +36,15 @@ async function rest(path, opts = {}) {
     process.exit(1);
   }
 
+  console.log('Schritt 1: Spieldaten abrufen …');
   const { source, matches } = await fetchMatches(process.env.FOOTBALL_DATA_API_KEY);
+  console.log(`Schritt 1 OK: ${matches.length} Spiele von ${source}`);
   if (!matches.length) {
     console.log(`Keine Spiele von ${source} erhalten – nichts zu tun.`);
     return;
   }
 
+  console.log('Schritt 2: Vorhandene Supabase-Einträge abfragen …');
   const existing = await rest('matches?select=ext_id,kickoff_utc,home_team,away_team,manual_override');
   const knownIds = new Set(existing.map((e) => e.ext_id));
   const skip = new Set(existing.filter((e) => e.manual_override).map((e) => e.ext_id));
@@ -77,6 +80,7 @@ async function rest(path, opts = {}) {
   console.log(`${rows.length} Spiele von ${source} nach Supabase synchronisiert` +
     (skipped ? ` (${skipped} manuell gepflegte übersprungen)` : ''));
 })().catch((err) => {
-  console.error(err.message);
+  console.error('FEHLER:', err.message);
+  if (err.cause) console.error('Ursache:', err.cause?.message || err.cause);
   process.exit(1);
 });
