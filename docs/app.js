@@ -802,6 +802,7 @@ async function refreshAll() {
       const leaderboard = await computeLeaderboard();
       const mine = leaderboard.find((u) => u.id === state.user.id);
       renderUserArea(mine);
+      if (state.user.is_admin) renderAdminUsers();
     }
     if (!$('#tab-turnier').hidden) renderTurnier();
   } catch (err) {
