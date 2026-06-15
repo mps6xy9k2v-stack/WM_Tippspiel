@@ -720,8 +720,36 @@ function renderAdminMatches() {
   });
 }
 
+async function renderAdminUsers() {
+  const sel = $('#rp-user');
+  if (!sel) return;
+  const { data: profiles } = await sb.from('profiles').select('id, name').order('name');
+  sel.innerHTML = (profiles || [])
+    .map((p) => `<option value="${p.id}">${esc(p.name)}</option>`)
+    .join('') || '<option value="">– keine Mitspieler –</option>';
+}
+
 function setupAdmin() {
   $('#admin-search').oninput = () => renderAdminMatches();
+  $('#reset-pw-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const sel = $('#rp-user');
+    const userId = sel.value;
+    const name = sel.selectedOptions[0]?.textContent || '';
+    const pass = $('#rp-pass').value;
+    if (!userId) { toast('Bitte einen Mitspieler wählen', true); return; }
+    try {
+      const { error } = await sb.rpc('admin_reset_password', {
+        p_user_id: userId,
+        p_new_password: pass,
+      });
+      if (error) throw new Error(error.message);
+      toast(`Neues Passwort für ${name} gesetzt`);
+      $('#rp-pass').value = '';
+    } catch (err) {
+      toast(err.message, true);
+    }
+  };
   $('#add-match-form').onsubmit = async (e) => {
     e.preventDefault();
     try {
@@ -752,7 +780,7 @@ function setupTabs() {
       switchToTab(btn.dataset.tab);
       if (btn.dataset.tab === 'turnier') renderTurnier();
       if (btn.dataset.tab === 'leaderboard') loadLeaderboard();
-      if (btn.dataset.tab === 'admin') renderAdminMatches();
+      if (btn.dataset.tab === 'admin') { renderAdminMatches(); renderAdminUsers(); }
     };
   });
   document.querySelectorAll('.filter').forEach((btn) => {

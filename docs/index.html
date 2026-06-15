@@ -101,6 +101,14 @@
       <h3>Ergebnis eintragen / korrigieren</h3>
       <input type="search" id="admin-search" placeholder="Team suchen…">
       <div id="admin-matches"></div>
+
+      <h3>Passwort zurücksetzen</h3>
+      <p class="muted small">Passwörter können aus Sicherheitsgründen nicht angezeigt werden – sie sind verschlüsselt gespeichert. Wenn jemand sein Passwort vergisst, vergibst du hier ein neues und teilst es der Person mit. Punkte und Tipps bleiben erhalten.</p>
+      <form id="reset-pw-form">
+        <select id="rp-user"></select>
+        <input type="text" id="rp-pass" placeholder="Neues Passwort (mind. 6 Zeichen)" minlength="6" required>
+        <button type="submit">Neues Passwort setzen</button>
+      </form>
     </section>
   </main>
 

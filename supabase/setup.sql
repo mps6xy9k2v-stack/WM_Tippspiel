@@ -106,6 +106,39 @@ $$;
 
 grant execute on function public.tippers(text) to anon, authenticated;
 
+-- pgcrypto für das Hashen neuer Passwörter (in Supabase im Schema "extensions")
+create extension if not exists pgcrypto with schema extensions;
+
+-- Admin-Passwort-Reset.
+-- Bestehende Passwörter lassen sich NICHT anzeigen – sie sind sicher gehasht
+-- gespeichert (Einbahnstraße). Der Admin kann hier nur ein NEUES Passwort
+-- vergeben und es der Person mitteilen. Profil, Tipps und Punkte bleiben
+-- unverändert, da ausschließlich das Passwort in auth.users geändert wird.
+create or replace function public.admin_reset_password(p_user_id uuid, p_new_password text)
+returns void
+language plpgsql
+security definer set search_path = public, extensions
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Nur Admins dürfen Passwörter zurücksetzen';
+  end if;
+  if p_new_password is null or char_length(p_new_password) < 6 then
+    raise exception 'Passwort muss mindestens 6 Zeichen haben';
+  end if;
+  update auth.users
+    set encrypted_password = extensions.crypt(p_new_password, extensions.gen_salt('bf')),
+        updated_at = now()
+    where id = p_user_id;
+  if not found then
+    raise exception 'Nutzer nicht gefunden';
+  end if;
+end;
+$$;
+
+revoke all on function public.admin_reset_password(uuid, text) from public, anon;
+grant execute on function public.admin_reset_password(uuid, text) to authenticated;
+
 -- Profile: Namen sind für alle sichtbar (Rangliste), jeder legt nur sein eigenes an
 drop policy if exists profiles_select on public.profiles;
 create policy profiles_select on public.profiles
