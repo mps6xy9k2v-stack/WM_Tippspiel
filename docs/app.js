@@ -13,13 +13,169 @@ const sb = cfg && cfg.SUPABASE_URL && !cfg.SUPABASE_URL.includes('DEIN-PROJEKT')
 // echte Mails werden nie verschickt ("Confirm email" in Supabase ausschalten).
 const EMAIL_DOMAIN = 'wm-tippspiel.example';
 
-const THEMES = [
-  { id: 'ozean', name: 'Ozean' },
-  { id: 'rasen', name: 'Rasen' },
-  { id: 'sunset', name: 'Sonnenuntergang' },
-  { id: 'nacht', name: 'Mitternacht' },
-  { id: 'hell', name: 'Hell' },
-];
+const THEMES = ['ozean', 'rasen', 'sunset', 'nacht', 'hell'];
+
+// ---------- Übersetzungen (Deutsch = Standard, Englisch optional) ----------
+
+const I18N = {
+  de: {
+    header_sub: '11. Juni – 19. Juli · USA, Kanada & Mexiko',
+    change_colors: 'Farben ändern',
+    choose_theme: 'Farbschema wählen',
+    tab_matches: 'Spiele', tab_turnier: 'Turnier', tab_leaderboard: 'Rangliste', tab_admin: 'Admin',
+    setup_title: 'Einrichtung nötig',
+    setup_body: 'Die Datei docs/config.js fehlt noch. Bitte docs/config.example.js nach docs/config.js kopieren und die Supabase-Zugangsdaten eintragen – Anleitung im README des Repositories.',
+    login_title: 'Anmelden', register_title: 'Registrieren',
+    login_submit: 'Einloggen', register_submit: 'Konto erstellen',
+    no_account: 'Noch kein Konto?', have_account: 'Schon registriert?',
+    do_register: 'Registrieren', do_login: 'Einloggen',
+    name_ph: 'Name (z. B. Gabor)', password_ph: 'Passwort (mind. 6 Zeichen)',
+    filter_upcoming: 'Anstehend', filter_all: 'Alle', filter_finished: 'Beendet', filter_untipped: 'Ohne Tipp',
+    loading_matches: 'Lade Spiele…',
+    group_stage: 'Gruppenphase',
+    group_stage_hint: 'Die zwei Gruppenbesten sowie die acht besten Gruppendritten erreichen die K.-o.-Runde.',
+    ko_title: 'K.-o.-Runde · Der Weg zum Finale',
+    ko_hint: 'Zum Scrollen wischen → Platzhalter wie „2A“ stehen für noch nicht feststehende Teams.',
+    lb_name: 'Name', lb_points: 'Punkte', lb_tips: 'Tipps',
+    lb_exact_t: 'Exakte Ergebnisse', lb_diff_t: 'Richtige Tordifferenz', lb_tend_t: 'Richtige Tendenz',
+    lb_legend: 'Exakt = 4 P. · Tordifferenz (±) = 3 P. · Tendenz (↑) = 2 P. – nur beendete Spiele zählen',
+    admin_manage: 'Spiele verwalten',
+    admin_note: 'Manuell gespeicherte Ergebnisse werden vom Auto-Sync nicht überschrieben.',
+    admin_add_match: 'Spiel manuell anlegen',
+    ph_home: 'Heimteam', ph_away: 'Auswärtsteam', ph_group: 'Gruppe (optional)',
+    btn_add: 'Anlegen',
+    admin_results: 'Ergebnis eintragen / korrigieren',
+    ph_search_team: 'Team suchen…',
+    admin_reset_pw: 'Passwort zurücksetzen',
+    admin_reset_note: 'Passwörter können aus Sicherheitsgründen nicht angezeigt werden – sie sind verschlüsselt gespeichert. Wenn jemand sein Passwort vergisst, vergibst du hier ein neues und teilst es der Person mit. Punkte und Tipps bleiben erhalten.',
+    ph_new_pw: 'Neues Passwort (mind. 6 Zeichen)',
+    btn_set_pw: 'Neues Passwort setzen',
+    save_btn: 'Speichern',
+    theme_ozean: 'Ozean', theme_rasen: 'Rasen', theme_sunset: 'Sonnenuntergang', theme_nacht: 'Mitternacht', theme_hell: 'Hell',
+    stage_R32: 'Sechzehntelfinale', stage_R16: 'Achtelfinale', stage_QF: 'Viertelfinale', stage_SF: 'Halbfinale', stage_P3: 'Spiel um Platz 3', stage_F: 'Finale',
+    matchday: 'Spieltag', group: 'Gruppe',
+    today: 'Heute', tomorrow: 'Morgen', clock_suffix: ' Uhr',
+    logout: 'Abmelden', login_register: 'Anmelden / Registrieren',
+    pts_short: 'P.', rank: 'Platz',
+    my_tip: 'Mein Tipp:', change: 'Ändern', tip: 'Tippen',
+    login_to_tip: 'Zum Tippen bitte anmelden',
+    who_tipped: 'Wer hat schon getippt?',
+    loading: 'Lade…',
+    tips_after_kickoff: 'Die Tipps werden ab Anpfiff sichtbar.',
+    nobody_tipped_yet: 'Noch hat niemand getippt.',
+    already_tipped: 'Schon getippt (Tipps ab Anpfiff sichtbar):',
+    nobody_tipped: 'Niemand hat getippt',
+    badge_finished: 'Beendet',
+    st_team: 'Team', st_p: 'Sp', st_goals: 'Tore', st_pts: 'Pkt',
+    no_group_matches: 'Noch keine Gruppenspiele geladen.',
+    no_ko_matches: 'Noch keine K.-o.-Spiele geladen.',
+    no_players: 'Noch keine Mitspieler',
+    no_players_opt: '– keine Mitspieler –',
+    sync_info: 'Ergebnisse werden automatisch alle 15 Minuten aktualisiert.',
+    load_error: 'Daten konnten nicht geladen werden: {msg}<br>Wurde supabase/setup.sql im Supabase-Projekt ausgeführt?',
+    no_matches_found: 'Keine Spiele gefunden. Die GitHub Action „Ergebnisse synchronisieren" einmal manuell starten?',
+    all_tipped: 'Alles getippt – du bist auf dem Laufenden!',
+    reminder_one: 'Du hast noch {n} anstehendes Spiel ohne Tipp – ',
+    reminder_many: 'Du hast noch {n} anstehende Spiele ohne Tipp – ',
+    reminder_link: 'jetzt tippen',
+    hello: 'Hallo {name}!',
+    tip_saved: 'Tipp gespeichert',
+    tip_locked: 'Das Spiel hat schon begonnen – Tipp gesperrt',
+    saved: 'Gespeichert',
+    match_added: 'Spiel angelegt',
+    choose_player: 'Bitte einen Mitspieler wählen',
+    pw_set_for: 'Neues Passwort für {name} gesetzt',
+    err_name_short: 'Name muss mindestens 2 Buchstaben/Zahlen enthalten',
+    err_name_long: 'Name darf höchstens 30 Zeichen haben',
+    err_name_taken: 'Name ist schon vergeben',
+    err_no_session: 'Registrierung angelegt, aber kein Login möglich – ist in Supabase unter Authentication „Confirm email" ausgeschaltet?',
+    err_profile: 'Profil konnte nicht angelegt werden: {msg}',
+    err_login: 'Name oder Passwort falsch',
+  },
+  en: {
+    header_sub: 'June 11 – July 19 · USA, Canada & Mexico',
+    change_colors: 'Change colours',
+    choose_theme: 'Choose colour scheme',
+    tab_matches: 'Matches', tab_turnier: 'Tournament', tab_leaderboard: 'Leaderboard', tab_admin: 'Admin',
+    setup_title: 'Setup required',
+    setup_body: 'The file docs/config.js is still missing. Please copy docs/config.example.js to docs/config.js and enter your Supabase credentials – see the repository README.',
+    login_title: 'Log in', register_title: 'Register',
+    login_submit: 'Log in', register_submit: 'Create account',
+    no_account: 'No account yet?', have_account: 'Already registered?',
+    do_register: 'Register', do_login: 'Log in',
+    name_ph: 'Name (e.g. Gabor)', password_ph: 'Password (min. 6 characters)',
+    filter_upcoming: 'Upcoming', filter_all: 'All', filter_finished: 'Finished', filter_untipped: 'Untipped',
+    loading_matches: 'Loading matches…',
+    group_stage: 'Group stage',
+    group_stage_hint: 'The top two of each group plus the eight best third-placed teams reach the knockout stage.',
+    ko_title: 'Knockout stage · The road to the final',
+    ko_hint: 'Swipe to scroll → placeholders like “2A” stand for teams not yet determined.',
+    lb_name: 'Name', lb_points: 'Points', lb_tips: 'Tips',
+    lb_exact_t: 'Exact results', lb_diff_t: 'Correct goal difference', lb_tend_t: 'Correct tendency',
+    lb_legend: 'Exact = 4 pts · Goal difference (±) = 3 pts · Tendency (↑) = 2 pts – only finished matches count',
+    admin_manage: 'Manage matches',
+    admin_note: 'Manually saved results are not overwritten by the auto-sync.',
+    admin_add_match: 'Add match manually',
+    ph_home: 'Home team', ph_away: 'Away team', ph_group: 'Group (optional)',
+    btn_add: 'Add',
+    admin_results: 'Enter / correct result',
+    ph_search_team: 'Search team…',
+    admin_reset_pw: 'Reset password',
+    admin_reset_note: 'For security reasons passwords cannot be shown – they are stored encrypted. If someone forgets their password, set a new one here and pass it on. Points and tips are kept.',
+    ph_new_pw: 'New password (min. 6 characters)',
+    btn_set_pw: 'Set new password',
+    save_btn: 'Save',
+    theme_ozean: 'Ocean', theme_rasen: 'Grass', theme_sunset: 'Sunset', theme_nacht: 'Midnight', theme_hell: 'Light',
+    stage_R32: 'Round of 32', stage_R16: 'Round of 16', stage_QF: 'Quarter-final', stage_SF: 'Semi-final', stage_P3: 'Third-place play-off', stage_F: 'Final',
+    matchday: 'Matchday', group: 'Group',
+    today: 'Today', tomorrow: 'Tomorrow', clock_suffix: '',
+    logout: 'Log out', login_register: 'Log in / Register',
+    pts_short: 'pts', rank: 'Rank',
+    my_tip: 'My tip:', change: 'Change', tip: 'Tip',
+    login_to_tip: 'Log in to tip',
+    who_tipped: 'Who has tipped already?',
+    loading: 'Loading…',
+    tips_after_kickoff: 'Tips become visible at kick-off.',
+    nobody_tipped_yet: 'Nobody has tipped yet.',
+    already_tipped: 'Already tipped (tips visible at kick-off):',
+    nobody_tipped: 'Nobody tipped',
+    badge_finished: 'Finished',
+    st_team: 'Team', st_p: 'P', st_goals: 'Goals', st_pts: 'Pts',
+    no_group_matches: 'No group matches loaded yet.',
+    no_ko_matches: 'No knockout matches loaded yet.',
+    no_players: 'No players yet',
+    no_players_opt: '– no players –',
+    sync_info: 'Results update automatically every 15 minutes.',
+    load_error: 'Could not load data: {msg}<br>Has supabase/setup.sql been run in the Supabase project?',
+    no_matches_found: 'No matches found. Run the GitHub Action “Sync results” once manually?',
+    all_tipped: 'All tipped – you are up to date!',
+    reminder_one: 'You still have {n} upcoming match without a tip – ',
+    reminder_many: 'You still have {n} upcoming matches without a tip – ',
+    reminder_link: 'tip now',
+    hello: 'Hi {name}!',
+    tip_saved: 'Tip saved',
+    tip_locked: 'The match has already started – tipping locked',
+    saved: 'Saved',
+    match_added: 'Match added',
+    choose_player: 'Please choose a player',
+    pw_set_for: 'New password set for {name}',
+    err_name_short: 'Name must contain at least 2 letters/numbers',
+    err_name_long: 'Name may be at most 30 characters',
+    err_name_taken: 'Name is already taken',
+    err_no_session: 'Registration created, but login failed – is "Confirm email" turned off in Supabase under Authentication?',
+    err_profile: 'Profile could not be created: {msg}',
+    err_login: 'Wrong name or password',
+  },
+};
+
+function tr(key, params) {
+  const dict = I18N[state.lang] || I18N.de;
+  let s = (dict[key] != null ? dict[key] : I18N.de[key]) ?? key;
+  if (params) for (const [k, v] of Object.entries(params)) s = s.replace(`{${k}}`, v);
+  return s;
+}
+
+const localeFor = () => (state.lang === 'en' ? 'en-GB' : 'de-DE');
 
 // Länderflaggen: Teamname -> ISO-Code (Quellen schreiben Namen teils unterschiedlich)
 const TEAM_ISO = {
@@ -85,6 +241,8 @@ const state = {
   matches: [],       // Spiele inkl. my_tip / all_tips
   filter: 'upcoming',
   authMode: 'login',
+  lang: localStorage.getItem('tippspiel-lang') === 'en' ? 'en' : 'de',
+  myStats: null,     // zuletzt berechnete eigene Punkte/Platzierung
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -93,9 +251,9 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
 }[c]));
 
-const fmtTime = (iso) => new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-const fmtDay = (iso) => new Date(iso).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' });
-const fmtShortDay = (iso) => new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+const fmtTime = (iso) => new Date(iso).toLocaleTimeString(localeFor(), { hour: '2-digit', minute: '2-digit' });
+const fmtDay = (iso) => new Date(iso).toLocaleDateString(localeFor(), { weekday: 'long', day: 'numeric', month: 'long' });
+const fmtShortDay = (iso) => new Date(iso).toLocaleDateString(localeFor(), { day: '2-digit', month: '2-digit' });
 
 function toast(msg, isError = false) {
   const el = $('#toast');
@@ -117,7 +275,11 @@ function calcPoints(homeTip, awayTip, homeScore, awayScore) {
 }
 
 // Anzeige-Übersetzungen für Gruppen-/Rundennamen aus den Datenquellen
-function displayGroup(g) { return g ? g.replace(/^Group /, 'Gruppe ').replace(/^GROUP_/, 'Gruppe ') : null; }
+function displayGroup(g) {
+  if (!g) return null;
+  const letter = g.replace(/^Group /, '').replace(/^GROUP_/, '').trim();
+  return `${tr('group')} ${letter}`;
+}
 
 function stageKey(stage) {
   const s = (stage || '').toLowerCase();
@@ -130,16 +292,14 @@ function stageKey(stage) {
   return null;
 }
 
-const STAGE_NAMES = {
-  R32: 'Sechzehntelfinale', R16: 'Achtelfinale', QF: 'Viertelfinale',
-  SF: 'Halbfinale', P3: 'Spiel um Platz 3', F: 'Finale',
-};
+const stageName = (key) => tr('stage_' + key);
 
 function displayStage(stage) {
   if (!stage) return null;
   const key = stageKey(stage);
-  if (key) return STAGE_NAMES[key];
-  return stage.replace(/^Matchday /, 'Spieltag ');
+  if (key) return stageName(key);
+  const md = stage.match(/^Matchday (\d+)/);
+  return md ? `${tr('matchday')} ${md[1]}` : stage;
 }
 
 function nameToEmail(name) {
@@ -153,12 +313,12 @@ function nameToEmail(name) {
 
 // ---------- Theme-Auswahl ----------
 
-function setupThemes() {
+function renderThemeList() {
   const list = $('#theme-list');
-  const current = () => document.documentElement.dataset.theme;
-  list.innerHTML = THEMES.map((t) => `
-    <button class="theme-option ${current() === t.id ? 'active' : ''}" data-theme-id="${t.id}">
-      <span class="swatch swatch-${t.id}"></span>${t.name}
+  const current = document.documentElement.dataset.theme;
+  list.innerHTML = THEMES.map((id) => `
+    <button class="theme-option ${current === id ? 'active' : ''}" data-theme-id="${id}">
+      <span class="swatch swatch-${id}"></span>${esc(tr('theme_' + id))}
     </button>`).join('');
   list.querySelectorAll('.theme-option').forEach((btn) => {
     btn.onclick = () => {
@@ -167,6 +327,10 @@ function setupThemes() {
       list.querySelectorAll('.theme-option').forEach((b) => b.classList.toggle('active', b === btn));
     };
   });
+}
+
+function setupThemes() {
+  renderThemeList();
   $('#theme-btn').onclick = (e) => {
     e.stopPropagation();
     $('#theme-panel').hidden = !$('#theme-panel').hidden;
@@ -175,6 +339,51 @@ function setupThemes() {
     if (!$('#theme-panel').hidden && !$('#theme-panel').contains(e.target)) {
       $('#theme-panel').hidden = true;
     }
+  });
+}
+
+// ---------- Sprache ----------
+
+function applyStaticI18n() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = tr(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    const v = tr(el.dataset.i18nTitle);
+    el.title = v;
+    if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', v);
+  });
+}
+
+function renderAuthTexts() {
+  const isLogin = state.authMode === 'login';
+  $('#auth-title').textContent = tr(isLogin ? 'login_title' : 'register_title');
+  $('#auth-submit').textContent = tr(isLogin ? 'login_submit' : 'register_submit');
+  $('#auth-switch-text').textContent = tr(isLogin ? 'no_account' : 'have_account');
+  $('#auth-switch-link').textContent = tr(isLogin ? 'do_register' : 'do_login');
+}
+
+function applyLanguage(lang) {
+  state.lang = lang === 'en' ? 'en' : 'de';
+  localStorage.setItem('tippspiel-lang', state.lang);
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll('#lang-toggle .lang-opt')
+    .forEach((b) => b.classList.toggle('active', b.dataset.lang === state.lang));
+  applyStaticI18n();
+  renderThemeList();
+  renderAuthTexts();
+  // Dynamisch erzeugte Inhalte neu rendern
+  renderUserArea(state.myStats);
+  $('#sync-info').textContent = tr('sync_info');
+  renderMatches();
+  renderTipReminder();
+  if (!$('#tab-turnier').hidden) renderTurnier();
+  if (!$('#tab-leaderboard').hidden) loadLeaderboard();
+  if (!$('#tab-admin').hidden) { renderAdminMatches(); renderAdminUsers(); }
+}
+
+function setupLang() {
+  document.querySelectorAll('#lang-toggle .lang-opt').forEach((btn) => {
+    btn.onclick = () => applyLanguage(btn.dataset.lang);
   });
 }
 
@@ -190,31 +399,31 @@ async function loadProfile() {
 
 async function register(name, password) {
   const email = nameToEmail(name);
-  if (!email) throw new Error('Name muss mindestens 2 Buchstaben/Zahlen enthalten');
-  if (name.trim().length > 30) throw new Error('Name darf höchstens 30 Zeichen haben');
+  if (!email) throw new Error(tr('err_name_short'));
+  if (name.trim().length > 30) throw new Error(tr('err_name_long'));
 
   // ilike-Sonderzeichen escapen, damit Namen wie "100%" sauber geprüft werden
   const pattern = name.trim().replace(/([%_\\])/g, '\\$1');
   const { data: taken } = await sb.from('profiles').select('id').ilike('name', pattern).limit(1);
-  if (taken && taken.length) throw new Error('Name ist schon vergeben');
+  if (taken && taken.length) throw new Error(tr('err_name_taken'));
 
   const { data, error } = await sb.auth.signUp({ email, password });
   if (error) {
-    if (/already registered/i.test(error.message)) throw new Error('Name ist schon vergeben');
+    if (/already registered/i.test(error.message)) throw new Error(tr('err_name_taken'));
     throw new Error(error.message);
   }
   if (!data.session) {
-    throw new Error('Registrierung angelegt, aber kein Login möglich – ist in Supabase unter Authentication "Confirm email" ausgeschaltet?');
+    throw new Error(tr('err_no_session'));
   }
   const { error: pErr } = await sb.from('profiles').insert({ id: data.user.id, name: name.trim() });
-  if (pErr) throw new Error('Profil konnte nicht angelegt werden: ' + pErr.message);
+  if (pErr) throw new Error(tr('err_profile', { msg: pErr.message }));
 }
 
 async function login(name, password) {
   const email = nameToEmail(name);
-  if (!email) throw new Error('Name oder Passwort falsch');
+  if (!email) throw new Error(tr('err_login'));
   const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) throw new Error('Name oder Passwort falsch');
+  if (error) throw new Error(tr('err_login'));
   // Profil nachziehen, falls die Registrierung früher beim Profil-Schritt abgebrochen ist
   const { data: { user } } = await sb.auth.getUser();
   const { data: profile } = await sb.from('profiles').select('id').eq('id', user.id).maybeSingle();
@@ -232,9 +441,9 @@ function renderUserArea(myStats) {
   const el = $('#user-area');
   if (state.user) {
     const stats = myStats && myStats.tipped > 0
-      ? `<span class="my-stats">${icon('star', 'icon star-icon')} ${myStats.points} P. · Platz ${myStats.rank}</span>` : '';
+      ? `<span class="my-stats">${icon('star', 'icon star-icon')} ${myStats.points} ${tr('pts_short')} · ${tr('rank')} ${myStats.rank}</span>` : '';
     el.innerHTML = `${stats}<span class="name">${esc(state.user.name)}</span>
-      <button class="secondary" id="logout-btn">Abmelden</button>`;
+      <button class="secondary" id="logout-btn">${tr('logout')}</button>`;
     $('#logout-btn').onclick = async () => {
       await sb.auth.signOut();
       state.user = null;
@@ -242,7 +451,7 @@ function renderUserArea(myStats) {
       refreshAll();
     };
   } else {
-    el.innerHTML = `<button id="show-login">Anmelden / Registrieren</button>`;
+    el.innerHTML = `<button id="show-login">${tr('login_register')}</button>`;
     $('#show-login').onclick = () => {
       $('#auth-box').hidden = false;
       $('#auth-name').focus();
@@ -257,11 +466,7 @@ function setupAuthForm() {
   switchLink.onclick = (e) => {
     e.preventDefault();
     state.authMode = state.authMode === 'login' ? 'register' : 'login';
-    const isLogin = state.authMode === 'login';
-    $('#auth-title').textContent = isLogin ? 'Anmelden' : 'Registrieren';
-    $('#auth-submit').textContent = isLogin ? 'Einloggen' : 'Konto erstellen';
-    $('#auth-switch-text').textContent = isLogin ? 'Noch kein Konto?' : 'Schon registriert?';
-    switchLink.textContent = isLogin ? 'Registrieren' : 'Einloggen';
+    renderAuthTexts();
     $('#auth-error').textContent = '';
   };
 
@@ -276,7 +481,7 @@ function setupAuthForm() {
       await loadProfile();
       $('#auth-box').hidden = true;
       $('#auth-password').value = '';
-      toast(`Hallo ${state.user?.name || name}!`);
+      toast(tr('hello', { name: state.user?.name || name }));
       refreshAll();
     } catch (err) {
       $('#auth-error').textContent = err.message;
@@ -355,8 +560,8 @@ function dayLabel(iso) {
   const tomorrow = new Date(today.getTime() + 86400000);
   const sameDay = (a, b) => a.toDateString() === b.toDateString();
   let prefix = '';
-  if (sameDay(d, today)) prefix = '<span class="today-flag">Heute</span>';
-  else if (sameDay(d, tomorrow)) prefix = '<span class="today-flag">Morgen</span>';
+  if (sameDay(d, today)) prefix = `<span class="today-flag">${tr('today')}</span>`;
+  else if (sameDay(d, tomorrow)) prefix = `<span class="today-flag">${tr('tomorrow')}</span>`;
   return prefix + esc(fmtDay(iso));
 }
 
@@ -365,7 +570,8 @@ function renderTipReminder() {
   const open = state.user ? untippedUpcoming().length : 0;
   $('#filter-untipped').hidden = !state.user;
   if (!open) { el.hidden = true; return; }
-  el.innerHTML = `${icon('pencil')} Du hast noch <strong>${open}</strong> anstehende ${open === 1 ? 'Spiel' : 'Spiele'} ohne Tipp – <a id="show-untipped">jetzt tippen</a>`;
+  const msg = tr(open === 1 ? 'reminder_one' : 'reminder_many', { n: `<strong>${open}</strong>` });
+  el.innerHTML = `${icon('pencil')} ${msg}<a id="show-untipped">${tr('reminder_link')}</a>`;
   el.hidden = false;
   $('#show-untipped').onclick = () => {
     state.filter = 'untipped';
@@ -379,8 +585,8 @@ function renderMatches() {
   const matches = filterMatches();
   if (!matches.length) {
     list.innerHTML = state.filter === 'untipped'
-      ? `<p class="muted">${icon('check', 'icon ok-icon')} Alles getippt – du bist auf dem Laufenden!</p>`
-      : '<p class="muted">Keine Spiele gefunden. Die GitHub Action "Ergebnisse synchronisieren" einmal manuell starten?</p>';
+      ? `<p class="muted">${icon('check', 'icon ok-icon')} ${tr('all_tipped')}</p>`
+      : `<p class="muted">${tr('no_matches_found')}</p>`;
     return;
   }
   let html = '';
@@ -407,10 +613,10 @@ function renderMatches() {
         });
         if (error) {
           throw new Error(/security|policy/i.test(error.message)
-            ? 'Das Spiel hat schon begonnen – Tipp gesperrt'
+            ? tr('tip_locked')
             : error.message);
         }
-        toast('Tipp gespeichert');
+        toast(tr('tip_saved'));
         loadMatches();
       } catch (err) {
         toast(err.message, true);
@@ -442,17 +648,17 @@ async function toggleTippers(card) {
   toggle?.classList.add('open');
   const extId = card.dataset.match;
   if (!tippersCache.has(extId)) {
-    box.innerHTML = '<span class="muted small">Lade…</span>';
+    box.innerHTML = `<span class="muted small">${tr('loading')}</span>`;
     const { data, error } = await sb.rpc('tippers', { p_match_ext_id: extId });
     tippersCache.set(extId, error ? null : (data || []).map((r) => r.name));
   }
   const names = tippersCache.get(extId);
   if (names === null) {
-    box.innerHTML = '<span class="muted small">Die Tipps werden ab Anpfiff sichtbar.</span>';
+    box.innerHTML = `<span class="muted small">${tr('tips_after_kickoff')}</span>`;
   } else if (!names.length) {
-    box.innerHTML = '<span class="muted small">Noch hat niemand getippt.</span>';
+    box.innerHTML = `<span class="muted small">${tr('nobody_tipped_yet')}</span>`;
   } else {
-    box.innerHTML = `<span class="muted small">Schon getippt (Tipps ab Anpfiff sichtbar):</span><br>` +
+    box.innerHTML = `<span class="muted small">${tr('already_tipped')}</span><br>` +
       names.map((n) => `<span class="tipper-chip">${esc(n)}</span>`).join('');
   }
 }
@@ -461,8 +667,8 @@ function renderMatchCard(m) {
   const statusBadge = m.status === 'LIVE'
     ? '<span class="badge live">LIVE</span>'
     : m.status === 'FINISHED'
-      ? '<span class="badge finished">Beendet</span>'
-      : `<span class="badge scheduled">${fmtTime(m.kickoff_utc)} Uhr</span>`;
+      ? `<span class="badge finished">${tr('badge_finished')}</span>`
+      : `<span class="badge scheduled">${fmtTime(m.kickoff_utc)}${tr('clock_suffix')}</span>`;
 
   const score = (m.home_score !== null && m.away_score !== null)
     ? `<div class="score">${m.home_score} : ${m.away_score}</div>`
@@ -478,19 +684,19 @@ function renderMatchCard(m) {
       const a = m.my_tip ? m.my_tip.away : '';
       tipSection = `
         <form class="tip-row tip-form" data-match="${esc(m.ext_id)}">
-          <label>Mein Tipp:</label>
+          <label>${tr('my_tip')}</label>
           <input class="tip-home" type="number" min="0" max="99" value="${h}" required>
           <span>:</span>
           <input class="tip-away" type="number" min="0" max="99" value="${a}" required>
-          <button type="submit">${m.my_tip ? 'Ändern' : 'Tippen'}</button>
+          <button type="submit">${m.my_tip ? tr('change') : tr('tip')}</button>
           ${m.my_tip ? `<span class="my-tip-saved">${icon('check')}</span>` : ''}
         </form>`;
     } else {
-      tipSection = `<div class="tip-row muted small">Zum Tippen bitte anmelden</div>`;
+      tipSection = `<div class="tip-row muted small">${tr('login_to_tip')}</div>`;
     }
     // Antippen zeigt, WER schon getippt hat (Tipps selbst erst ab Anpfiff)
     tipSection += `
-      <div class="tippers-toggle">Wer hat schon getippt? ${icon('chevron', 'icon chev')}</div>
+      <div class="tippers-toggle">${tr('who_tipped')} ${icon('chevron', 'icon chev')}</div>
       <div class="tippers" hidden></div>`;
   } else if (m.all_tips && m.all_tips.length) {
     const rows = m.all_tips
@@ -499,11 +705,11 @@ function renderMatchCard(m) {
       .map((t) => `<tr class="${t.mine ? 'me' : ''}">
           <td>${esc(t.user)}</td>
           <td>${t.home} : ${t.away}</td>
-          <td class="pts ${t.points !== null ? 'pts-' + t.points : ''}">${t.points !== null ? t.points + ' P.' : ''}</td>
+          <td class="pts ${t.points !== null ? 'pts-' + t.points : ''}">${t.points !== null ? t.points + ' ' + tr('pts_short') : ''}</td>
         </tr>`).join('');
     tipSection = `<div class="all-tips"><table>${rows}</table></div>`;
   } else if (m.started) {
-    tipSection = `<div class="tip-row muted small">Niemand hat getippt</div>`;
+    tipSection = `<div class="tip-row muted small">${tr('nobody_tipped')}</div>`;
   }
 
   return `
@@ -557,7 +763,7 @@ function renderStandings() {
     <div class="group-card">
       <h3>${esc(g.name)}</h3>
       <table>
-        <thead><tr><th class="t">Team</th><th>Sp</th><th>Tore</th><th>±</th><th>Pkt</th></tr></thead>
+        <thead><tr><th class="t">${tr('st_team')}</th><th>${tr('st_p')}</th><th>${tr('st_goals')}</th><th>±</th><th>${tr('st_pts')}</th></tr></thead>
         <tbody>
           ${g.rows.map((r, i) => `
             <tr class="${i < 2 && r.played > 0 ? 'qualified' : ''}">
@@ -569,7 +775,7 @@ function renderStandings() {
             </tr>`).join('')}
         </tbody>
       </table>
-    </div>`).join('') || '<p class="muted">Noch keine Gruppenspiele geladen.</p>';
+    </div>`).join('') || `<p class="muted">${tr('no_group_matches')}</p>`;
 }
 
 function bracketTeamHtml(team, score, otherScore, finished) {
@@ -607,19 +813,19 @@ function renderBracket() {
   const cols = ['R32', 'R16', 'QF', 'SF'].map((key) => {
     const matches = byStage.get(key) || [];
     if (!matches.length) return '';
-    return `<div class="bracket-col"><h3>${STAGE_NAMES[key]}</h3>${matches.map((m) => matchCard(m)).join('')}</div>`;
+    return `<div class="bracket-col"><h3>${stageName(key)}</h3>${matches.map((m) => matchCard(m)).join('')}</div>`;
   }).join('');
 
   const finals = byStage.get('F') || [];
   const third = byStage.get('P3') || [];
   const finalCol = (finals.length || third.length) ? `
     <div class="bracket-col final-col">
-      <h3>${icon('trophy')} ${STAGE_NAMES.F}</h3>
+      <h3>${icon('trophy')} ${stageName('F')}</h3>
       ${finals.map((m) => matchCard(m, 'final-match')).join('')}
-      ${third.length ? `<div class="bracket-p3-label">${STAGE_NAMES.P3}</div>${third.map((m) => matchCard(m)).join('')}` : ''}
+      ${third.length ? `<div class="bracket-p3-label">${stageName('P3')}</div>${third.map((m) => matchCard(m)).join('')}` : ''}
     </div>` : '';
 
-  $('#bracket').innerHTML = (cols + finalCol) || '<p class="muted">Noch keine K.-o.-Spiele geladen.</p>';
+  $('#bracket').innerHTML = (cols + finalCol) || `<p class="muted">${tr('no_ko_matches')}</p>`;
 }
 
 function renderTurnier() {
@@ -673,7 +879,7 @@ async function loadLeaderboard() {
       <td>${u.diff}</td>
       <td>${u.tendency}</td>
       <td>${u.tipped}</td>
-    </tr>`).join('') || '<tr><td colspan="7" class="muted">Noch keine Mitspieler</td></tr>';
+    </tr>`).join('') || `<tr><td colspan="7" class="muted">${tr('no_players')}</td></tr>`;
 }
 
 // ---------- Admin ----------
@@ -695,7 +901,7 @@ function renderAdminMatches() {
         ${['SCHEDULED', 'LIVE', 'FINISHED', 'CANCELLED'].map((s) =>
           `<option value="${s}" ${m.status === s ? 'selected' : ''}>${s}</option>`).join('')}
       </select>
-      <button type="submit" class="secondary">Speichern</button>
+      <button type="submit" class="secondary">${tr('save_btn')}</button>
     </form>`).join('');
 
   el.querySelectorAll('.admin-result-form').forEach((form) => {
@@ -711,7 +917,7 @@ function renderAdminMatches() {
           manual_override: true,
         }).eq('ext_id', form.dataset.match);
         if (error) throw new Error(error.message);
-        toast('Gespeichert');
+        toast(tr('saved'));
         loadMatches();
       } catch (err) {
         toast(err.message, true);
@@ -726,7 +932,7 @@ async function renderAdminUsers() {
   const { data: profiles } = await sb.from('profiles').select('id, name').order('name');
   sel.innerHTML = (profiles || [])
     .map((p) => `<option value="${p.id}">${esc(p.name)}</option>`)
-    .join('') || '<option value="">– keine Mitspieler –</option>';
+    .join('') || `<option value="">${tr('no_players_opt')}</option>`;
 }
 
 function setupAdmin() {
@@ -737,14 +943,14 @@ function setupAdmin() {
     const userId = sel.value;
     const name = sel.selectedOptions[0]?.textContent || '';
     const pass = $('#rp-pass').value;
-    if (!userId) { toast('Bitte einen Mitspieler wählen', true); return; }
+    if (!userId) { toast(tr('choose_player'), true); return; }
     try {
       const { error } = await sb.rpc('admin_reset_password', {
         p_user_id: userId,
         p_new_password: pass,
       });
       if (error) throw new Error(error.message);
-      toast(`Neues Passwort für ${name} gesetzt`);
+      toast(tr('pw_set_for', { name }));
       $('#rp-pass').value = '';
     } catch (err) {
       toast(err.message, true);
@@ -762,7 +968,7 @@ function setupAdmin() {
         manual_override: true,
       });
       if (error) throw new Error(error.message);
-      toast('Spiel angelegt');
+      toast(tr('match_added'));
       e.target.reset();
       await loadMatches();
       renderAdminMatches();
@@ -794,20 +1000,21 @@ function setupTabs() {
 }
 
 async function refreshAll() {
-  renderUserArea();
+  renderUserArea(state.myStats);
   try {
     await loadMatches();
-    $('#sync-info').textContent = 'Ergebnisse werden automatisch alle 15 Minuten aktualisiert.';
+    $('#sync-info').textContent = tr('sync_info');
     if (state.user) {
       const leaderboard = await computeLeaderboard();
-      const mine = leaderboard.find((u) => u.id === state.user.id);
-      renderUserArea(mine);
+      state.myStats = leaderboard.find((u) => u.id === state.user.id) || null;
+      renderUserArea(state.myStats);
       if (state.user.is_admin) renderAdminUsers();
+    } else {
+      state.myStats = null;
     }
     if (!$('#tab-turnier').hidden) renderTurnier();
   } catch (err) {
-    $('#matches-list').innerHTML = `<p class="error">Daten konnten nicht geladen werden: ${esc(err.message)}<br>
-      Wurde supabase/setup.sql im Supabase-Projekt ausgeführt?</p>`;
+    $('#matches-list').innerHTML = `<p class="error">${tr('load_error', { msg: esc(err.message) })}</p>`;
   }
 }
 
@@ -819,9 +1026,11 @@ async function refreshAll() {
     return;
   }
   setupThemes();
+  setupLang();
   setupTabs();
   setupAuthForm();
   setupAdmin();
+  applyLanguage(state.lang); // statische Texte + Sprachschalter initialisieren
   await loadProfile();
   refreshAll();
   // Auto-Refresh für neue Ergebnisse

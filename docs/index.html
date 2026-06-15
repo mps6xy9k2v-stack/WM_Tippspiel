@@ -5,48 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WM 2026 Tippspiel</title>
   <script>
-    // Theme vor dem Rendern setzen, damit nichts aufblitzt
+    // Theme & Sprache vor dem Rendern setzen, damit nichts aufblitzt
     document.documentElement.dataset.theme = localStorage.getItem('tippspiel-theme') || 'ozean';
+    document.documentElement.lang = localStorage.getItem('tippspiel-lang') || 'de';
   </script>
-  <link rel="stylesheet" href="style.css?v=20260615">
+  <link rel="stylesheet" href="style.css?v=20260615b">
 </head>
 <body>
   <header>
     <div class="header-title">
       <h1><svg class="logo-ball" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 8.1l3.7 2.7-1.4 4.4H9.7L8.3 10.8z" fill="currentColor"/><path d="M12 2.8v5.3M20.8 9.7l-5.1 1.1M17.6 19.9l-3.3-4.7M6.4 19.9l3.3-4.7M3.2 9.7l5.1 1.1" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/></svg> WM 2026 Tippspiel</h1>
-      <span class="header-sub">11. Juni – 19. Juli · USA, Kanada &amp; Mexiko</span>
+      <span class="header-sub" data-i18n="header_sub">11. Juni – 19. Juli · USA, Kanada &amp; Mexiko</span>
     </div>
     <div class="header-actions">
-      <button id="theme-btn" class="icon-btn" title="Farben ändern" aria-label="Farben ändern"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18c1.5 0 2.3-.9 2.3-2 0-.6-.3-1-.6-1.4-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h1.6A4.9 4.9 0 0021.7 9.6C21.2 5.8 17 3 12 3z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7.6" cy="11" r="1.25" fill="currentColor"/><circle cx="10.5" cy="7.3" r="1.25" fill="currentColor"/><circle cx="15" cy="7.3" r="1.25" fill="currentColor"/><circle cx="17.6" cy="11" r="1.25" fill="currentColor"/></svg></button>
+      <div id="lang-toggle" class="lang-toggle" role="group" aria-label="Sprache / Language">
+        <button class="lang-opt" data-lang="de">DE</button>
+        <button class="lang-opt" data-lang="en">EN</button>
+      </div>
+      <button id="theme-btn" class="icon-btn" data-i18n-title="change_colors" title="Farben ändern" aria-label="Farben ändern"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18c1.5 0 2.3-.9 2.3-2 0-.6-.3-1-.6-1.4-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h1.6A4.9 4.9 0 0021.7 9.6C21.2 5.8 17 3 12 3z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="7.6" cy="11" r="1.25" fill="currentColor"/><circle cx="10.5" cy="7.3" r="1.25" fill="currentColor"/><circle cx="15" cy="7.3" r="1.25" fill="currentColor"/><circle cx="17.6" cy="11" r="1.25" fill="currentColor"/></svg></button>
       <div id="user-area"></div>
     </div>
   </header>
 
   <div id="theme-panel" hidden>
-    <div class="theme-panel-title">Farbschema wählen</div>
+    <div class="theme-panel-title" data-i18n="choose_theme">Farbschema wählen</div>
     <div id="theme-list"></div>
   </div>
 
   <nav id="tabs">
-    <button class="tab active" data-tab="matches">Spiele</button>
-    <button class="tab" data-tab="turnier">Turnier</button>
-    <button class="tab" data-tab="leaderboard">Rangliste</button>
-    <button class="tab" data-tab="admin" id="admin-tab" hidden>Admin</button>
+    <button class="tab active" data-tab="matches" data-i18n="tab_matches">Spiele</button>
+    <button class="tab" data-tab="turnier" data-i18n="tab_turnier">Turnier</button>
+    <button class="tab" data-tab="leaderboard" data-i18n="tab_leaderboard">Rangliste</button>
+    <button class="tab" data-tab="admin" id="admin-tab" data-i18n="tab_admin" hidden>Admin</button>
   </nav>
 
   <main>
     <section id="setup-hint" hidden>
-      <h2>Einrichtung nötig</h2>
-      <p>Die Datei <code>docs/config.js</code> fehlt noch. Bitte
-        <code>docs/config.example.js</code> nach <code>docs/config.js</code> kopieren
-        und die Supabase-Zugangsdaten eintragen – Anleitung im README des Repositories.</p>
+      <h2 data-i18n="setup_title">Einrichtung nötig</h2>
+      <p data-i18n="setup_body">Die Datei docs/config.js fehlt noch. Bitte docs/config.example.js nach docs/config.js kopieren und die Supabase-Zugangsdaten eintragen – Anleitung im README des Repositories.</p>
     </section>
 
     <section id="auth-box" hidden>
       <h2 id="auth-title">Anmelden</h2>
       <form id="auth-form">
-        <input type="text" id="auth-name" placeholder="Name (z. B. Gabor)" autocomplete="username" required>
-        <input type="password" id="auth-password" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="current-password" required>
+        <input type="text" id="auth-name" data-i18n-ph="name_ph" placeholder="Name (z. B. Gabor)" autocomplete="username" required>
+        <input type="password" id="auth-password" data-i18n-ph="password_ph" placeholder="Passwort (mind. 6 Zeichen)" autocomplete="current-password" required>
         <button type="submit" id="auth-submit">Einloggen</button>
       </form>
       <p class="auth-switch">
@@ -60,54 +63,54 @@
       <div id="sync-info" class="sync-info"></div>
       <div id="tip-reminder" class="tip-reminder" hidden></div>
       <div id="match-filter">
-        <button class="filter active" data-filter="upcoming">Anstehend</button>
-        <button class="filter" data-filter="all">Alle</button>
-        <button class="filter" data-filter="finished">Beendet</button>
-        <button class="filter" data-filter="untipped" id="filter-untipped" hidden>Ohne Tipp</button>
+        <button class="filter active" data-filter="upcoming" data-i18n="filter_upcoming">Anstehend</button>
+        <button class="filter" data-filter="all" data-i18n="filter_all">Alle</button>
+        <button class="filter" data-filter="finished" data-i18n="filter_finished">Beendet</button>
+        <button class="filter" data-filter="untipped" id="filter-untipped" data-i18n="filter_untipped" hidden>Ohne Tipp</button>
       </div>
-      <div id="matches-list"><p class="muted">Lade Spiele…</p></div>
+      <div id="matches-list"><p class="muted" data-i18n="loading_matches">Lade Spiele…</p></div>
     </section>
 
     <section id="tab-turnier" hidden>
-      <h2 class="section-title">Gruppenphase</h2>
-      <p class="muted small">Die zwei Gruppenbesten sowie die acht besten Gruppendritten erreichen die K.-o.-Runde.</p>
+      <h2 class="section-title" data-i18n="group_stage">Gruppenphase</h2>
+      <p class="muted small" data-i18n="group_stage_hint">Die zwei Gruppenbesten sowie die acht besten Gruppendritten erreichen die K.-o.-Runde.</p>
       <div id="standings"></div>
-      <h2 class="section-title">K.-o.-Runde · Der Weg zum Finale</h2>
-      <p class="muted small">Zum Scrollen wischen → Platzhalter wie „2A“ stehen für noch nicht feststehende Teams.</p>
+      <h2 class="section-title" data-i18n="ko_title">K.-o.-Runde · Der Weg zum Finale</h2>
+      <p class="muted small" data-i18n="ko_hint">Zum Scrollen wischen → Platzhalter wie „2A“ stehen für noch nicht feststehende Teams.</p>
       <div id="bracket-scroll"><div id="bracket"></div></div>
     </section>
 
     <section id="tab-leaderboard" hidden>
       <table id="leaderboard-table">
         <thead>
-          <tr><th>#</th><th>Name</th><th>Punkte</th><th title="Exakte Ergebnisse"><svg class="th-icon" viewBox="0 0 24 24" aria-label="Exakt"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></th><th title="Richtige Tordifferenz">±</th><th title="Richtige Tendenz">↑</th><th>Tipps</th></tr>
+          <tr><th>#</th><th data-i18n="lb_name">Name</th><th data-i18n="lb_points">Punkte</th><th data-i18n-title="lb_exact_t" title="Exakte Ergebnisse"><svg class="th-icon" viewBox="0 0 24 24" aria-label="Exakt"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></th><th data-i18n-title="lb_diff_t" title="Richtige Tordifferenz">±</th><th data-i18n-title="lb_tend_t" title="Richtige Tendenz">↑</th><th data-i18n="lb_tips">Tipps</th></tr>
         </thead>
         <tbody></tbody>
       </table>
-      <p class="muted small">Exakt = 4 P. · Tordifferenz (±) = 3 P. · Tendenz (↑) = 2 P. – nur beendete Spiele zählen</p>
+      <p class="muted small" data-i18n="lb_legend">Exakt = 4 P. · Tordifferenz (±) = 3 P. · Tendenz (↑) = 2 P. – nur beendete Spiele zählen</p>
     </section>
 
     <section id="tab-admin" hidden>
-      <h2>Spiele verwalten</h2>
-      <p class="muted small">Manuell gespeicherte Ergebnisse werden vom Auto-Sync nicht überschrieben.</p>
-      <h3>Spiel manuell anlegen</h3>
+      <h2 data-i18n="admin_manage">Spiele verwalten</h2>
+      <p class="muted small" data-i18n="admin_note">Manuell gespeicherte Ergebnisse werden vom Auto-Sync nicht überschrieben.</p>
+      <h3 data-i18n="admin_add_match">Spiel manuell anlegen</h3>
       <form id="add-match-form">
-        <input type="text" id="am-home" placeholder="Heimteam" required>
-        <input type="text" id="am-away" placeholder="Auswärtsteam" required>
+        <input type="text" id="am-home" data-i18n-ph="ph_home" placeholder="Heimteam" required>
+        <input type="text" id="am-away" data-i18n-ph="ph_away" placeholder="Auswärtsteam" required>
         <input type="datetime-local" id="am-kickoff" required>
-        <input type="text" id="am-group" placeholder="Gruppe (optional)">
-        <button type="submit">Anlegen</button>
+        <input type="text" id="am-group" data-i18n-ph="ph_group" placeholder="Gruppe (optional)">
+        <button type="submit" data-i18n="btn_add">Anlegen</button>
       </form>
-      <h3>Ergebnis eintragen / korrigieren</h3>
-      <input type="search" id="admin-search" placeholder="Team suchen…">
+      <h3 data-i18n="admin_results">Ergebnis eintragen / korrigieren</h3>
+      <input type="search" id="admin-search" data-i18n-ph="ph_search_team" placeholder="Team suchen…">
       <div id="admin-matches"></div>
 
-      <h3>Passwort zurücksetzen</h3>
-      <p class="muted small">Passwörter können aus Sicherheitsgründen nicht angezeigt werden – sie sind verschlüsselt gespeichert. Wenn jemand sein Passwort vergisst, vergibst du hier ein neues und teilst es der Person mit. Punkte und Tipps bleiben erhalten.</p>
+      <h3 data-i18n="admin_reset_pw">Passwort zurücksetzen</h3>
+      <p class="muted small" data-i18n="admin_reset_note">Passwörter können aus Sicherheitsgründen nicht angezeigt werden – sie sind verschlüsselt gespeichert. Wenn jemand sein Passwort vergisst, vergibst du hier ein neues und teilst es der Person mit. Punkte und Tipps bleiben erhalten.</p>
       <form id="reset-pw-form">
         <select id="rp-user"></select>
-        <input type="text" id="rp-pass" placeholder="Neues Passwort (mind. 6 Zeichen)" minlength="6" required>
-        <button type="submit">Neues Passwort setzen</button>
+        <input type="text" id="rp-pass" data-i18n-ph="ph_new_pw" placeholder="Neues Passwort (mind. 6 Zeichen)" minlength="6" required>
+        <button type="submit" data-i18n="btn_set_pw">Neues Passwort setzen</button>
       </form>
     </section>
   </main>
@@ -115,6 +118,6 @@
   <div id="toast" hidden></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260615"></script>
+  <script src="app.js?v=20260615b"></script>
 </body>
 </html>

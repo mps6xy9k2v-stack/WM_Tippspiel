@@ -152,6 +152,26 @@ header {
 }
 .icon-btn:hover { border-color: var(--accent); }
 
+/* Sprachumschalter DE/EN */
+.lang-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.lang-toggle .lang-opt {
+  background: var(--card2);
+  color: var(--muted);
+  border: none;
+  border-radius: 0;
+  padding: 6px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.lang-toggle .lang-opt.active { background: var(--accent); color: var(--on-accent); }
+
 /* ---------- Theme-Auswahl ---------- */
 
 #theme-panel {
