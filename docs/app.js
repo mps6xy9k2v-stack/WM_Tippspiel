@@ -71,7 +71,11 @@ const I18N = {
     no_ko_matches: 'Noch keine K.-o.-Spiele geladen.',
     no_players: 'Noch keine Mitspieler',
     no_players_opt: '– keine Mitspieler –',
-    sync_info: 'Ergebnisse werden automatisch alle 15 Minuten aktualisiert.',
+    sync_info: 'Ergebnisse werden automatisch aktualisiert.',
+    live_now: 'Jetzt live',
+    updated_just_now: 'gerade aktualisiert',
+    updated_min_ago: 'aktualisiert vor {n} Min',
+    updated_sec_ago: 'aktualisiert vor {n} Sek',
     load_error: 'Daten konnten nicht geladen werden: {msg}<br>Wurde supabase/setup.sql im Supabase-Projekt ausgeführt?',
     no_matches_found: 'Keine Spiele gefunden. Die GitHub Action „Ergebnisse synchronisieren" einmal manuell starten?',
     all_tipped: 'Alles getippt – du bist auf dem Laufenden!',
@@ -145,7 +149,11 @@ const I18N = {
     no_ko_matches: 'No knockout matches loaded yet.',
     no_players: 'No players yet',
     no_players_opt: '– no players –',
-    sync_info: 'Results update automatically every 15 minutes.',
+    sync_info: 'Results update automatically.',
+    live_now: 'Live now',
+    updated_just_now: 'just updated',
+    updated_min_ago: 'updated {n} min ago',
+    updated_sec_ago: 'updated {n} sec ago',
     load_error: 'Could not load data: {msg}<br>Has supabase/setup.sql been run in the Supabase project?',
     no_matches_found: 'No matches found. Run the GitHub Action “Sync results” once manually?',
     all_tipped: 'All tipped – you are up to date!',
@@ -243,6 +251,9 @@ const state = {
   authMode: 'login',
   lang: localStorage.getItem('tippspiel-lang') === 'en' ? 'en' : 'de',
   myStats: null,     // zuletzt berechnete eigene Punkte/Platzierung
+  allTips: [],       // zuletzt geladene Tipps (für Rangliste wiederverwendet)
+  lastUpdate: null,  // Zeitpunkt des letzten erfolgreichen Ladens
+  refreshTimer: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -374,6 +385,7 @@ function applyLanguage(lang) {
   // Dynamisch erzeugte Inhalte neu rendern
   renderUserArea(state.myStats);
   $('#sync-info').textContent = tr('sync_info');
+  renderLiveBar();
   renderMatches();
   renderTipReminder();
   if (!$('#tab-turnier').hidden) renderTurnier();
@@ -491,24 +503,22 @@ function setupAuthForm() {
 
 // ---------- Daten laden ----------
 
-async function loadMatches() {
-  const [{ data: matches, error: mErr }, { data: tips }] = await Promise.all([
-    sb.from('matches').select('*').order('kickoff_utc').order('ext_id'),
-    // RLS liefert nur eigene Tipps + Tipps zu bereits angepfiffenen Spielen
-    sb.from('tips').select('user_id, match_ext_id, home_tip, away_tip, profiles(name)'),
-  ]);
-  if (mErr) throw new Error(mErr.message);
+const CACHE_KEY = 'tippspiel-cache-v1';
 
+// Baut state.matches aus rohen Spiel-/Tipp-Zeilen und rendert die Liste.
+// Wird sowohl aus dem Cache (sofort) als auch nach dem Netzwerk-Fetch genutzt.
+function buildMatches(matchRows, tipRows) {
   const tipsByMatch = new Map();
-  for (const t of tips || []) {
+  for (const t of tipRows || []) {
     if (!tipsByMatch.has(t.match_ext_id)) tipsByMatch.set(t.match_ext_id, []);
     tipsByMatch.get(t.match_ext_id).push(t);
   }
+  state.allTips = tipRows || [];
 
   const now = Date.now();
-  // Defensiv zusätzlich clientseitig sortieren
-  (matches || []).sort((a, b) => a.kickoff_utc.localeCompare(b.kickoff_utc) || a.ext_id.localeCompare(b.ext_id));
-  state.matches = (matches || []).map((m) => {
+  const rows = (matchRows || []).slice()
+    .sort((a, b) => a.kickoff_utc.localeCompare(b.kickoff_utc) || a.ext_id.localeCompare(b.ext_id));
+  state.matches = rows.map((m) => {
     const started = new Date(m.kickoff_utc).getTime() <= now;
     const matchTips = tipsByMatch.get(m.ext_id) || [];
     const myTip = state.user ? matchTips.find((t) => t.user_id === state.user.id) : null;
@@ -527,8 +537,81 @@ async function loadMatches() {
         : null,
     };
   });
+  renderLiveBar();
   renderMatches();
   renderTipReminder();
+}
+
+// Letzte bekannte Daten sofort aus dem Cache anzeigen (gefühlt sofortiger Start)
+function loadFromCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if (c && Array.isArray(c.matches) && c.matches.length) {
+      state.lastUpdate = c.at || null;
+      buildMatches(c.matches, c.tips || []);
+      return true;
+    }
+  } catch { /* Cache ignorieren */ }
+  return false;
+}
+
+async function loadMatches() {
+  const [{ data: matches, error: mErr }, { data: tips }] = await Promise.all([
+    sb.from('matches').select('ext_id, home_team, away_team, kickoff_utc, stage, group_name, venue, status, home_score, away_score')
+      .order('kickoff_utc').order('ext_id'),
+    // RLS liefert nur eigene Tipps + Tipps zu bereits angepfiffenen Spielen
+    sb.from('tips').select('user_id, match_ext_id, home_tip, away_tip, profiles(name)'),
+  ]);
+  if (mErr) throw new Error(mErr.message);
+
+  state.lastUpdate = Date.now();
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ matches, tips: tips || [], at: state.lastUpdate }));
+  } catch { /* localStorage evtl. voll – egal */ }
+
+  buildMatches(matches, tips || []);
+}
+
+// ---------- Live-Bereich & adaptives Nachladen ----------
+
+const liveMatches = () => state.matches.filter((m) => m.status === 'LIVE');
+
+function freshnessText() {
+  if (!state.lastUpdate) return '';
+  const sec = Math.round((Date.now() - state.lastUpdate) / 1000);
+  if (sec < 20) return tr('updated_just_now');
+  if (sec < 60) return tr('updated_sec_ago', { n: sec });
+  return tr('updated_min_ago', { n: Math.round(sec / 60) });
+}
+
+function renderLiveBar() {
+  const el = $('#live-bar');
+  if (!el) return;
+  const live = liveMatches();
+  if (!live.length) { el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="live-bar-head">
+      <span class="live-dot"></span><strong>${tr('live_now')}</strong>
+      <span class="live-fresh">${freshnessText()}</span>
+    </div>
+    ${live.map((m) => `
+      <div class="live-match">
+        <span class="lm-team home">${esc(m.home_team)} ${flagFor(m.home_team)}</span>
+        <span class="lm-score">${m.home_score ?? 0} : ${m.away_score ?? 0}</span>
+        <span class="lm-team away">${flagFor(m.away_team)} ${esc(m.away_team)}</span>
+      </div>`).join('')}`;
+}
+
+// Laufende Spiele alle 30 s nachladen, sonst alle 75 s – spart Anfragen,
+// hält Live-Ergebnisse aber so frisch wie die Datenquelle es erlaubt.
+function startPolling() {
+  clearTimeout(state.refreshTimer);
+  const delay = liveMatches().length ? 30000 : 75000;
+  state.refreshTimer = setTimeout(async () => {
+    await loadMatches().catch(() => {});
+    startPolling();
+  }, delay);
 }
 
 // ---------- Spiele rendern ----------
@@ -836,12 +919,12 @@ function renderTurnier() {
 // ---------- Rangliste ----------
 
 async function computeLeaderboard() {
-  const [{ data: profiles }, { data: tips }] = await Promise.all([
-    sb.from('profiles').select('id, name'),
-    // RLS: sichtbar sind alle Tipps zu angepfiffenen Spielen – das genügt,
-    // weil nur beendete Spiele Punkte bringen
-    sb.from('tips').select('user_id, match_ext_id, home_tip, away_tip'),
-  ]);
+  const { data: profiles } = await sb.from('profiles').select('id, name');
+  // Tipps aus dem letzten Spiele-Laden wiederverwenden (spart eine Abfrage);
+  // sie enthalten bereits alle für die Wertung nötigen (beendeten) Spiele.
+  const tips = (state.allTips && state.allTips.length)
+    ? state.allTips
+    : (await sb.from('tips').select('user_id, match_ext_id, home_tip, away_tip')).data;
   const stats = new Map((profiles || []).map((p) => [p.id, {
     id: p.id, name: p.name, points: 0, exact: 0, diff: 0, tendency: 0, tipped: 0,
   }]));
@@ -1031,10 +1114,10 @@ async function refreshAll() {
   setupAuthForm();
   setupAdmin();
   applyLanguage(state.lang); // statische Texte + Sprachschalter initialisieren
+  loadFromCache();           // letzte bekannte Spiele sofort zeigen
   await loadProfile();
-  refreshAll();
-  // Auto-Refresh für neue Ergebnisse
-  setInterval(() => {
-    if (!$('#tab-matches').hidden) loadMatches().catch(() => {});
-  }, 60 * 1000);
+  await refreshAll();
+  startPolling();            // adaptiv: schneller bei Live-Spielen
+  // Frische-Anzeige im Live-Bereich mitlaufen lassen (ohne Netzwerk)
+  setInterval(() => { if (!$('#live-bar').hidden) renderLiveBar(); }, 15000);
 })();

@@ -9,7 +9,7 @@
     document.documentElement.dataset.theme = localStorage.getItem('tippspiel-theme') || 'ozean';
     document.documentElement.lang = localStorage.getItem('tippspiel-lang') || 'de';
   </script>
-  <link rel="stylesheet" href="style.css?v=20260615b">
+  <link rel="stylesheet" href="style.css?v=20260616">
 </head>
 <body>
   <header>
@@ -60,6 +60,7 @@
     </section>
 
     <section id="tab-matches">
+      <div id="live-bar" class="live-bar" hidden></div>
       <div id="sync-info" class="sync-info"></div>
       <div id="tip-reminder" class="tip-reminder" hidden></div>
       <div id="match-filter">
@@ -118,6 +119,6 @@
   <div id="toast" hidden></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260615b"></script>
+  <script src="app.js?v=20260616"></script>
 </body>
 </html>

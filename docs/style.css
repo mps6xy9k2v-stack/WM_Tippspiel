@@ -511,6 +511,56 @@ button.secondary { background: var(--card2); color: var(--text); border: 1px sol
 
 .sync-info { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
 
+/* Live-Bereich oben auf dem Spiele-Tab */
+.live-bar {
+  background: linear-gradient(135deg, var(--card) 0%, var(--card2) 100%);
+  border: 1px solid var(--live);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 14px var(--shadow);
+}
+.live-bar-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--live);
+  margin-bottom: 8px;
+}
+.live-bar-head .live-fresh {
+  margin-left: auto;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.72rem;
+}
+.live-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--live);
+  animation: pulse 1.4s infinite;
+}
+.live-match {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+.live-match + .live-match { border-top: 1px solid var(--border); }
+.lm-team { font-weight: 600; font-size: 0.95rem; }
+.lm-team.home { text-align: right; }
+.lm-score {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent2);
+  min-width: 56px;
+  text-align: center;
+}
+
 /* ---------- Rangliste ---------- */
 
 #leaderboard-table {

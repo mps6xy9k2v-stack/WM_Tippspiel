@@ -7,8 +7,9 @@ name: Ergebnisse synchronisieren
 
 on:
   schedule:
-    # Alle 15 Minuten (GitHub führt Cron-Jobs teils mit etwas Verzögerung aus)
-    - cron: '*/15 * * * *'
+    # Alle 5 Minuten (kürzester von GitHub erlaubter Abstand; Cron-Jobs laufen
+    # teils mit etwas Verzögerung). So sind Live-Ergebnisse möglichst frisch.
+    - cron: '*/5 * * * *'
   workflow_dispatch: {}
 
 concurrency:
