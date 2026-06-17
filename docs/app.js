@@ -524,6 +524,8 @@ function buildMatches(matchRows, tipRows) {
     const started = new Date(m.kickoff_utc).getTime() <= now;
     const matchTips = tipsByMatch.get(m.ext_id) || [];
     const myTip = state.user ? matchTips.find((t) => t.user_id === state.user.id) : null;
+    // Während des Spiels provisorische Punkte gegen den aktuellen Stand (inkl. 0:0)
+    const [esH, esA] = effectiveScore(m);
     return {
       ...m,
       started,
@@ -534,7 +536,7 @@ function buildMatches(matchRows, tipRows) {
             mine: state.user && t.user_id === state.user.id,
             home: t.home_tip,
             away: t.away_tip,
-            points: calcPoints(t.home_tip, t.away_tip, m.home_score, m.away_score),
+            points: calcPoints(t.home_tip, t.away_tip, esH, esA),
           }))
         : null,
     };
@@ -576,7 +578,27 @@ async function loadMatches() {
 
 // ---------- Live-Bereich & adaptives Nachladen ----------
 
-const liveMatches = () => state.matches.filter((m) => m.status === 'LIVE');
+// Ein Spiel "läuft gerade", wenn die Quelle es als LIVE meldet ODER der
+// Anstoß vorbei ist und es (noch) nicht beendet/abgesagt wurde. Das
+// Zeitfenster (~2,5 h) verhindert, dass Spiele bei ausbleibendem
+// Status-Update dauerhaft als live hängen bleiben.
+function isInProgress(m) {
+  if (m.status === 'LIVE') return true;
+  if (m.status === 'FINISHED' || m.status === 'CANCELLED') return false;
+  const start = new Date(m.kickoff_utc).getTime();
+  const now = Date.now();
+  return start <= now && now <= start + 150 * 60 * 1000;
+}
+
+// Anzuzeigendes Ergebnis: echtes Resultat, sonst nach Anstoß 0:0,
+// davor [null, null] (-> "– : –").
+function effectiveScore(m) {
+  if (m.home_score !== null && m.away_score !== null) return [m.home_score, m.away_score];
+  if (isInProgress(m) || m.status === 'FINISHED') return [m.home_score ?? 0, m.away_score ?? 0];
+  return [null, null];
+}
+
+const liveMatches = () => state.matches.filter(isInProgress);
 
 function freshnessText() {
   if (!state.lastUpdate) return '';
@@ -597,12 +619,14 @@ function renderLiveBar() {
       <span class="live-dot"></span><strong>${tr('live_now')}</strong>
       <span class="live-fresh">${freshnessText()}</span>
     </div>
-    ${live.map((m) => `
+    ${live.map((m) => {
+      const [hs, as] = effectiveScore(m);
+      return `
       <div class="live-match">
         <span class="lm-team home">${esc(m.home_team)} ${flagFor(m.home_team)}</span>
-        <span class="lm-score">${m.home_score ?? 0} : ${m.away_score ?? 0}</span>
+        <span class="lm-score">${hs ?? 0} : ${as ?? 0}</span>
         <span class="lm-team away">${flagFor(m.away_team)} ${esc(m.away_team)}</span>
-      </div>`).join('')}`;
+      </div>`; }).join('')}`;
 }
 
 // Laufende Spiele alle 30 s nachladen, sonst alle 75 s – spart Anfragen,
@@ -749,14 +773,16 @@ async function toggleTippers(card) {
 }
 
 function renderMatchCard(m) {
-  const statusBadge = m.status === 'LIVE'
+  const live = isInProgress(m);
+  const statusBadge = live
     ? '<span class="badge live">LIVE</span>'
     : m.status === 'FINISHED'
       ? `<span class="badge finished">${tr('badge_finished')}</span>`
       : `<span class="badge scheduled">${fmtTime(m.kickoff_utc)}${tr('clock_suffix')}</span>`;
 
-  const score = (m.home_score !== null && m.away_score !== null)
-    ? `<div class="score">${m.home_score} : ${m.away_score}</div>`
+  const [hs, as] = effectiveScore(m);
+  const score = (hs !== null && as !== null)
+    ? `<div class="score">${hs} : ${as}</div>`
     : `<div class="score tbd">– : –</div>`;
 
   const meta = [displayGroup(m.group_name), displayStage(m.stage), m.venue].filter(Boolean).join(' · ');
@@ -798,7 +824,7 @@ function renderMatchCard(m) {
   }
 
   return `
-    <div class="match-card ${m.status === 'LIVE' ? 'is-live' : ''} ${upcoming ? 'clickable' : ''}" data-match="${esc(m.ext_id)}">
+    <div class="match-card ${live ? 'is-live' : ''} ${upcoming ? 'clickable' : ''}" data-match="${esc(m.ext_id)}">
       <div class="match-top"><span>${esc(meta)}</span>${statusBadge}</div>
       <div class="match-row">
         ${teamHtml(m.home_team, true)}
@@ -885,13 +911,15 @@ function renderBracket() {
 
   const matchCard = (m, extraClass = '') => {
     const finished = m.status === 'FINISHED';
-    const badge = m.status === 'LIVE' ? '<span class="badge live">LIVE</span>'
+    const live = isInProgress(m);
+    const badge = live ? '<span class="badge live">LIVE</span>'
       : finished ? '' : `<span>${fmtShortDay(m.kickoff_utc)} · ${fmtTime(m.kickoff_utc)}</span>`;
+    const [hs, as] = effectiveScore(m);
     return `
       <div class="bracket-match ${extraClass}">
         <div class="bm-meta"><span>${esc(m.venue || '')}</span>${badge}</div>
-        ${bracketTeamHtml(m.home_team, m.home_score, m.away_score, finished)}
-        ${bracketTeamHtml(m.away_team, m.away_score, m.home_score, finished)}
+        ${bracketTeamHtml(m.home_team, hs, as, finished)}
+        ${bracketTeamHtml(m.away_team, as, hs, finished)}
       </div>`;
   };
 
