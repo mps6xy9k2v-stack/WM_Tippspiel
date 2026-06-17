@@ -4,8 +4,9 @@
 // Wird sowohl vom lokalen Server (src/sync.js) als auch vom
 // Supabase-Sync der GitHub Action (scripts/sync-supabase.js) genutzt.
 
-const FD_URL = 'https://api.football-data.org/v4/competitions/WC/matches';
-const OF_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
+// URLs sind per Umgebungsvariable überschreibbar (für Tests/alternative Endpunkte)
+const FD_URL = process.env.FOOTBALL_DATA_URL || 'https://api.football-data.org/v4/competitions/WC/matches';
+const OF_URL = process.env.OPENFOOTBALL_URL || 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
 
 function mapFdStatus(status) {
   switch (status) {
