@@ -38,6 +38,7 @@ const I18N = {
     ko_hint: 'Zum Scrollen wischen → Platzhalter wie „2A“ stehen für noch nicht feststehende Teams.',
     lb_name: 'Name', lb_points: 'Punkte', lb_tips: 'Tipps',
     lb_exact_t: 'Exakte Ergebnisse', lb_diff_t: 'Richtige Tordifferenz', lb_tend_t: 'Richtige Tendenz',
+    lb_avg_t: 'Durchschnittliche Punkte pro Tipp',
     lb_legend: 'Exakt = 4 P. · Tordifferenz (±) = 3 P. · Tendenz (↑) = 2 P. – nur beendete Spiele zählen',
     admin_manage: 'Spiele verwalten',
     admin_note: 'Manuell gespeicherte Ergebnisse werden vom Auto-Sync nicht überschrieben.',
@@ -116,6 +117,7 @@ const I18N = {
     ko_hint: 'Swipe to scroll → placeholders like “2A” stand for teams not yet determined.',
     lb_name: 'Name', lb_points: 'Points', lb_tips: 'Tips',
     lb_exact_t: 'Exact results', lb_diff_t: 'Correct goal difference', lb_tend_t: 'Correct tendency',
+    lb_avg_t: 'Average points per tip',
     lb_legend: 'Exact = 4 pts · Goal difference (±) = 3 pts · Tendency (↑) = 2 pts – only finished matches count',
     admin_manage: 'Manage matches',
     admin_note: 'Manually saved results are not overwritten by the auto-sync.',
@@ -962,7 +964,10 @@ async function loadLeaderboard() {
       <td>${u.diff}</td>
       <td>${u.tendency}</td>
       <td>${u.tipped}</td>
-    </tr>`).join('') || `<tr><td colspan="7" class="muted">${tr('no_players')}</td></tr>`;
+      <td class="lb-avg">${u.tipped > 0
+        ? (u.points / u.tipped).toLocaleString(localeFor(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+        : '–'}</td>
+    </tr>`).join('') || `<tr><td colspan="8" class="muted">${tr('no_players')}</td></tr>`;
 }
 
 // ---------- Admin ----------

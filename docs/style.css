@@ -920,6 +920,7 @@ button.secondary:hover { border-color: var(--accent); filter: none; box-shadow: 
 #leaderboard-table td:nth-child(3) { font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; color: var(--accent2); }
 #leaderboard-table tr.me { background: var(--accent-soft); }
 #leaderboard-table tr.me td:nth-child(2) { color: var(--accent); font-weight: 700; }
+#leaderboard-table .lb-avg { font-family: var(--font-display); font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
 
 /* ---------- Admin ---------- */
 

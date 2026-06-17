@@ -9,7 +9,7 @@
     document.documentElement.dataset.theme = localStorage.getItem('tippspiel-theme') || 'ozean';
     document.documentElement.lang = localStorage.getItem('tippspiel-lang') || 'de';
   </script>
-  <link rel="stylesheet" href="style.css?v=20260617">
+  <link rel="stylesheet" href="style.css?v=20260617b">
 </head>
 <body>
   <header>
@@ -84,7 +84,7 @@
     <section id="tab-leaderboard" hidden>
       <table id="leaderboard-table">
         <thead>
-          <tr><th>#</th><th data-i18n="lb_name">Name</th><th data-i18n="lb_points">Punkte</th><th data-i18n-title="lb_exact_t" title="Exakte Ergebnisse"><svg class="th-icon" viewBox="0 0 24 24" aria-label="Exakt"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></th><th data-i18n-title="lb_diff_t" title="Richtige Tordifferenz">±</th><th data-i18n-title="lb_tend_t" title="Richtige Tendenz">↑</th><th data-i18n="lb_tips">Tipps</th></tr>
+          <tr><th>#</th><th data-i18n="lb_name">Name</th><th data-i18n="lb_points">Punkte</th><th data-i18n-title="lb_exact_t" title="Exakte Ergebnisse"><svg class="th-icon" viewBox="0 0 24 24" aria-label="Exakt"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4.4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></th><th data-i18n-title="lb_diff_t" title="Richtige Tordifferenz">±</th><th data-i18n-title="lb_tend_t" title="Richtige Tendenz">↑</th><th data-i18n="lb_tips">Tipps</th><th class="lb-avg" data-i18n-title="lb_avg_t" title="Durchschnittliche Punkte pro Tipp">Ø</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -119,6 +119,6 @@
   <div id="toast" hidden></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=20260617"></script>
+  <script src="app.js?v=20260617b"></script>
 </body>
 </html>
