@@ -237,6 +237,9 @@ const icon = (name, cls = 'icon') => `<span class="${cls}">${ICONS[name]}</span>
 const isPlaceholder = (team) => /^[123][A-L]($|\/)/.test(team) || team.includes('/') ||
   /^[WL]\d+$/.test(team) || /^Winner|^Loser/i.test(team);
 
+// Eine Partie ist (noch) keine echte Begegnung, wenn ein Team ein Platzhalter ist.
+const hasPlaceholder = (m) => isPlaceholder(m.home_team) || isPlaceholder(m.away_team);
+
 function teamHtml(team, isHome) {
   const flag = flagFor(team);
   const tbd = isPlaceholder(team) ? ' tbd' : '';
@@ -598,7 +601,7 @@ function effectiveScore(m) {
   return [null, null];
 }
 
-const liveMatches = () => state.matches.filter(isInProgress);
+const liveMatches = () => state.matches.filter((m) => isInProgress(m) && !hasPlaceholder(m));
 
 function freshnessText() {
   if (!state.lastUpdate) return '';
@@ -644,22 +647,25 @@ function startPolling() {
 
 function untippedUpcoming() {
   return state.matches.filter((m) =>
-    !m.started && m.status === 'SCHEDULED' && !m.my_tip);
+    !m.started && m.status === 'SCHEDULED' && !m.my_tip && !hasPlaceholder(m));
 }
 
 function filterMatches() {
   const now = Date.now();
+  // Platzhalter-Partien (z. B. "2A – 2B") sind keine echten, tippbaren Spiele
+  // und werden in der Spiele-Liste ausgeblendet.
+  const base = state.matches.filter((m) => !hasPlaceholder(m));
   switch (state.filter) {
     case 'upcoming':
-      return state.matches.filter((m) => m.status === 'LIVE' ||
+      return base.filter((m) => m.status === 'LIVE' ||
         (m.status !== 'FINISHED' && m.status !== 'CANCELLED' &&
          new Date(m.kickoff_utc).getTime() > now - 3 * 3600 * 1000));
     case 'finished':
-      return state.matches.filter((m) => m.status === 'FINISHED');
+      return base.filter((m) => m.status === 'FINISHED');
     case 'untipped':
       return untippedUpcoming();
     default:
-      return state.matches;
+      return base;
   }
 }
 
@@ -906,6 +912,13 @@ function renderBracket() {
     if (!key) continue;
     if (!byStage.has(key)) byStage.set(key, []);
     byStage.get(key).push(m);
+  }
+  // Pro Runde: sobald echte Paarungen feststehen, Platzhalter ausblenden
+  // (entfernt die doppelten "2A – 2B"-Altlasten; künftige Runden ohne echte
+  // Teams behalten ihre Platzhalter als Struktur).
+  for (const [key, arr] of byStage) {
+    const real = arr.filter((m) => !hasPlaceholder(m));
+    if (real.length) byStage.set(key, real);
   }
   for (const arr of byStage.values()) arr.sort((a, b) => a.kickoff_utc.localeCompare(b.kickoff_utc));
 
