@@ -642,10 +642,10 @@ button.secondary:hover { border-color: var(--accent); filter: none; box-shadow: 
 .all-tips td { padding: 4px 6px; }
 .all-tips td.pts { text-align: right; font-family: var(--font-display); font-weight: 800; }
 .all-tips tr.me td { color: var(--accent2); font-weight: 700; }
-.pts-4 { color: var(--accent); }
-.pts-3 { color: var(--accent2); }
-.pts-2 { color: color-mix(in srgb, var(--accent) 55%, var(--text)); }
-.pts-0 { color: var(--muted); }
+.pts-exact { color: var(--accent); }
+.pts-diff { color: var(--accent2); }
+.pts-tendency { color: color-mix(in srgb, var(--accent) 55%, var(--text)); }
+.pts-none { color: var(--muted); }
 
 .tip-reminder {
   background: linear-gradient(135deg, var(--accent-soft), transparent);

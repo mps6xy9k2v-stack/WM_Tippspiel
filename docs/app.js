@@ -39,7 +39,7 @@ const I18N = {
     lb_name: 'Name', lb_points: 'Punkte', lb_tips: 'Tipps',
     lb_exact_t: 'Exakte Ergebnisse', lb_diff_t: 'Richtige Tordifferenz', lb_tend_t: 'Richtige Tendenz',
     lb_avg_t: 'Durchschnittliche Punkte pro Tipp',
-    lb_legend: 'Exakt = 4 P. · Tordifferenz (±) = 3 P. · Tendenz (↑) = 2 P. – nur beendete Spiele zählen',
+    lb_legend: 'Exakt = 4 P. · Tordifferenz (±) = 3 P. · Tendenz (↑) = 2 P. · Finale: 100 / 75 / 50 P. – nur beendete Spiele zählen',
     admin_manage: 'Spiele verwalten',
     admin_note: 'Manuell gespeicherte Ergebnisse werden vom Auto-Sync nicht überschrieben.',
     admin_add_match: 'Spiel manuell anlegen',
@@ -118,7 +118,7 @@ const I18N = {
     lb_name: 'Name', lb_points: 'Points', lb_tips: 'Tips',
     lb_exact_t: 'Exact results', lb_diff_t: 'Correct goal difference', lb_tend_t: 'Correct tendency',
     lb_avg_t: 'Average points per tip',
-    lb_legend: 'Exact = 4 pts · Goal difference (±) = 3 pts · Tendency (↑) = 2 pts – only finished matches count',
+    lb_legend: 'Exact = 4 pts · Goal difference (±) = 3 pts · Tendency (↑) = 2 pts · Final: 100 / 75 / 50 pts – only finished matches count',
     admin_manage: 'Manage matches',
     admin_note: 'Manually saved results are not overwritten by the auto-sync.',
     admin_add_match: 'Add match manually',
@@ -280,14 +280,30 @@ function toast(msg, isError = false) {
   toast._t = setTimeout(() => { el.hidden = true; }, 2500);
 }
 
-// Punkteregeln: 4 exakt, 3 Tordifferenz, 2 Tendenz, 0 sonst
-function calcPoints(homeTip, awayTip, homeScore, awayScore) {
+// Punkteregeln: exakt / Tordifferenz / richtige Tendenz.
+// Standard 4/3/2, im Finale 100/75/50.
+const POINTS_DEFAULT = { exact: 4, diff: 3, tendency: 2 };
+const POINTS_FINAL = { exact: 100, diff: 75, tendency: 50 };
+
+// Welche Kategorie trifft der Tipp? -> 'exact' | 'diff' | 'tendency' | 'none' | null
+function tipCategory(homeTip, awayTip, homeScore, awayScore) {
   if (homeScore === null || homeScore === undefined ||
       awayScore === null || awayScore === undefined) return null;
-  if (homeTip === homeScore && awayTip === awayScore) return 4;
-  if (homeTip - awayTip === homeScore - awayScore) return 3;
-  if (Math.sign(homeTip - awayTip) === Math.sign(homeScore - awayScore)) return 2;
-  return 0;
+  if (homeTip === homeScore && awayTip === awayScore) return 'exact';
+  if (homeTip - awayTip === homeScore - awayScore) return 'diff';
+  if (Math.sign(homeTip - awayTip) === Math.sign(homeScore - awayScore)) return 'tendency';
+  return 'none';
+}
+
+// Punkteschema je Spiel (Finale bekommt Sonderpunkte)
+function schemeFor(match) {
+  return match && stageKey(match.stage) === 'F' ? POINTS_FINAL : POINTS_DEFAULT;
+}
+
+function calcPoints(homeTip, awayTip, homeScore, awayScore, scheme = POINTS_DEFAULT) {
+  const cat = tipCategory(homeTip, awayTip, homeScore, awayScore);
+  if (cat === null) return null;
+  return cat === 'none' ? 0 : scheme[cat];
 }
 
 // Anzeige-Übersetzungen für Gruppen-/Rundennamen aus den Datenquellen
@@ -529,6 +545,7 @@ function buildMatches(matchRows, tipRows) {
     const myTip = state.user ? matchTips.find((t) => t.user_id === state.user.id) : null;
     // Während des Spiels provisorische Punkte gegen den aktuellen Stand (inkl. 0:0)
     const [esH, esA] = effectiveScore(m);
+    const scheme = schemeFor(m);
     return {
       ...m,
       started,
@@ -539,7 +556,8 @@ function buildMatches(matchRows, tipRows) {
             mine: state.user && t.user_id === state.user.id,
             home: t.home_tip,
             away: t.away_tip,
-            points: calcPoints(t.home_tip, t.away_tip, esH, esA),
+            category: tipCategory(t.home_tip, t.away_tip, esH, esA),
+            points: calcPoints(t.home_tip, t.away_tip, esH, esA, scheme),
           }))
         : null,
     };
@@ -822,7 +840,7 @@ function renderMatchCard(m) {
       .map((t) => `<tr class="${t.mine ? 'me' : ''}">
           <td>${esc(t.user)}</td>
           <td>${t.home} : ${t.away}</td>
-          <td class="pts ${t.points !== null ? 'pts-' + t.points : ''}">${t.points !== null ? t.points + ' ' + tr('pts_short') : ''}</td>
+          <td class="pts ${t.category ? 'pts-' + t.category : ''}">${t.points !== null ? t.points + ' ' + tr('pts_short') : ''}</td>
         </tr>`).join('');
     tipSection = `<div class="all-tips"><table>${rows}</table></div>`;
   } else if (m.started) {
@@ -979,12 +997,13 @@ async function computeLeaderboard() {
     const m = finished.get(t.match_ext_id);
     const s = stats.get(t.user_id);
     if (!m || !s) continue;
-    const p = calcPoints(t.home_tip, t.away_tip, m.home_score, m.away_score);
+    const cat = tipCategory(t.home_tip, t.away_tip, m.home_score, m.away_score);
+    if (cat === null) continue;
     s.tipped++;
-    s.points += p;
-    if (p === 4) s.exact++;
-    else if (p === 3) s.diff++;
-    else if (p === 2) s.tendency++;
+    s.points += cat === 'none' ? 0 : schemeFor(m)[cat];
+    if (cat === 'exact') s.exact++;
+    else if (cat === 'diff') s.diff++;
+    else if (cat === 'tendency') s.tendency++;
   }
 
   const sorted = [...stats.values()].sort(
