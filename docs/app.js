@@ -240,6 +240,12 @@ const isPlaceholder = (team) => /^[123][A-L]($|\/)/.test(team) || team.includes(
 // Eine Partie ist (noch) keine echte Begegnung, wenn ein Team ein Platzhalter ist.
 const hasPlaceholder = (m) => isPlaceholder(m.home_team) || isPlaceholder(m.away_team);
 
+// Ein Platzhalter-Spiel wird nur ausgeblendet, wenn seine Runde bereits echte
+// Paarungen enthält (= altes Duplikat). Steht die Runde noch aus (z. B. Finale,
+// Spiel um Platz 3), bleibt der Platzhalter sichtbar/tippbar.
+const isDuplicatePlaceholder = (m) =>
+  hasPlaceholder(m) && state.realStages && state.realStages.has(stageKey(m.stage));
+
 function teamHtml(team, isHome) {
   const flag = flagFor(team);
   const tbd = isPlaceholder(team) ? ' tbd' : '';
@@ -259,6 +265,7 @@ const state = {
   allTips: [],       // zuletzt geladene Tipps (für Rangliste wiederverwendet)
   lastUpdate: null,  // Zeitpunkt des letzten erfolgreichen Ladens
   refreshTimer: null,
+  realStages: new Set(), // K.-o.-Runden, die schon echte Paarungen haben
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -562,6 +569,14 @@ function buildMatches(matchRows, tipRows) {
         : null,
     };
   });
+  // Welche K.-o.-Runden haben schon echte Paarungen? (für Duplikat-Erkennung)
+  state.realStages = new Set();
+  for (const m of state.matches) {
+    if (!hasPlaceholder(m)) {
+      const k = stageKey(m.stage);
+      if (k) state.realStages.add(k);
+    }
+  }
   renderLiveBar();
   renderMatches();
   renderTipReminder();
@@ -619,7 +634,7 @@ function effectiveScore(m) {
   return [null, null];
 }
 
-const liveMatches = () => state.matches.filter((m) => isInProgress(m) && !hasPlaceholder(m));
+const liveMatches = () => state.matches.filter((m) => isInProgress(m) && !isDuplicatePlaceholder(m));
 
 function freshnessText() {
   if (!state.lastUpdate) return '';
@@ -665,14 +680,14 @@ function startPolling() {
 
 function untippedUpcoming() {
   return state.matches.filter((m) =>
-    !m.started && m.status === 'SCHEDULED' && !m.my_tip && !hasPlaceholder(m));
+    !m.started && m.status === 'SCHEDULED' && !m.my_tip && !isDuplicatePlaceholder(m));
 }
 
 function filterMatches() {
   const now = Date.now();
-  // Platzhalter-Partien (z. B. "2A – 2B") sind keine echten, tippbaren Spiele
-  // und werden in der Spiele-Liste ausgeblendet.
-  const base = state.matches.filter((m) => !hasPlaceholder(m));
+  // Nur doppelte Platzhalter (deren Runde schon echte Paarungen hat) ausblenden;
+  // noch ausstehende Runden wie Finale / Spiel um Platz 3 bleiben sichtbar.
+  const base = state.matches.filter((m) => !isDuplicatePlaceholder(m));
   switch (state.filter) {
     case 'upcoming':
       return base.filter((m) => m.status === 'LIVE' ||
